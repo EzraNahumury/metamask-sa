@@ -35,6 +35,8 @@ const Schema = z.object({
   MERCHANTS_BASE_URL: z.preprocess(emptyToUndefined, z.string().url().default("http://localhost:4021")),
 
   AGENT_TICK_SECONDS: z.coerce.number().int().positive().default(30),
+  AGENT_PORT: z.coerce.number().int().positive().default(4030),
+  AGENT_CORS_ORIGIN: z.string().default("*"),
 });
 
 export const config = Schema.parse(process.env);

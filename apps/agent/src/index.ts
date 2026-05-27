@@ -1,25 +1,34 @@
 /**
- * Long-running entry point. Runs a tick, sleeps for AGENT_TICK_SECONDS,
- * repeats. For Day 3 we'll add an HTTP server + SSE endpoint so the
- * frontend can stream decisions; for now stdout is the UI.
+ * Long-running agent. Boots an HTTP server (Express + SSE) and a
+ * background tick loop. The frontend subscribes to /events to render
+ * decisions live; the loop drives the action.
  */
 import { config } from "./config.js";
+import { runTick } from "./loop.js";
+import { buildServer } from "./server.js";
 
-async function runOnce() {
-  const mod = await import("./tick.js");
-  void mod; // tick.ts runs as a side effect
-}
-
-async function main() {
-  console.log(`agent up — tick every ${config.AGENT_TICK_SECONDS}s, merchants=${config.MERCHANTS_BASE_URL}`);
+async function tickLoop() {
   while (true) {
     try {
-      await runOnce();
+      await runTick();
     } catch (e) {
-      console.error("tick failed:", e);
+      console.error("tick error:", e);
     }
     await new Promise((r) => setTimeout(r, config.AGENT_TICK_SECONDS * 1000));
   }
+}
+
+async function main() {
+  const app = buildServer();
+  app.listen(config.AGENT_PORT, () => {
+    console.log(`agent listening at http://localhost:${config.AGENT_PORT}`);
+    console.log(`  GET  /decisions       full decision log`);
+    console.log(`  GET  /events          SSE stream`);
+    console.log(`  POST /admin/run-tick  trigger one tick`);
+    console.log(`tick interval: ${config.AGENT_TICK_SECONDS}s — merchants=${config.MERCHANTS_BASE_URL}`);
+  });
+  // Run ticks in the background so the HTTP server is always responsive.
+  void tickLoop();
 }
 
 void main();
