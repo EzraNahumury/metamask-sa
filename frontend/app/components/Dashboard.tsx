@@ -10,6 +10,7 @@ import {
 } from "../lib/agent-client";
 import { formatMicroUsdc, formatTime } from "../lib/format";
 import type { AgentEvent, Decision, MerchantService } from "../lib/types";
+import FridayBriefPanel from "./FridayBrief";
 
 type ConnState = "connecting" | "live" | "offline";
 
@@ -178,6 +179,8 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+
+      <FridayBriefPanel />
 
       <section>
         <div className="flex items-baseline justify-between mb-3">

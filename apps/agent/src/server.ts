@@ -3,6 +3,7 @@ import cors from "cors";
 import { config } from "./config.js";
 import { db } from "./db.js";
 import { bus, type AgentEvent } from "./events.js";
+import { generateFridayBrief } from "./friday-brief.js";
 import { runTick } from "./loop.js";
 
 function serializeDecision(d: ReturnType<typeof db.list>[number]) {
@@ -60,6 +61,26 @@ export function buildServer() {
       off();
       clearInterval(ping);
     });
+  });
+
+  /**
+   * Compile the Friday Brief (text + chart image + TTS audio) in one shot.
+   * Costs Venice credits: ~$0.03-0.05 per call. Cache the response on the
+   * frontend so users don't accidentally re-fire it.
+   */
+  app.get("/friday-brief", async (_req, res) => {
+    try {
+      const brief = await generateFridayBrief();
+      res.json({
+        ...brief,
+        decisions: brief.decisions.map((d) => ({
+          ...d,
+          quotedMicroUsdc: d.quotedMicroUsdc.toString(),
+        })),
+      });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
   });
 
   /**
