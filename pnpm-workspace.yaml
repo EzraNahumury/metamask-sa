@@ -2,5 +2,6 @@ packages:
   - "spike"
   - "apps/*"
   - "packages/*"
+  - "frontend"
 onlyBuiltDependencies:
   - esbuild
