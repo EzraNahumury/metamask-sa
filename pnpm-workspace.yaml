@@ -2,3 +2,5 @@ packages:
   - "spike"
   - "apps/*"
   - "packages/*"
+onlyBuiltDependencies:
+  - esbuild
