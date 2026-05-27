@@ -1,0 +1,27 @@
+{
+  "name": "@delegate/spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Day-0 foundation spike scripts. Verify the four critical primitives work before we commit to the full build.",
+  "scripts": {
+    "venice": "tsx 01-venice-test.ts",
+    "oneshot": "tsx 02-1shot-relayer-test.ts",
+    "upgrade7702": "tsx 03-7702-upgrade.ts",
+    "grant7715": "tsx 04-7715-grant.ts",
+    "webhook": "tsx 05-webhook-receiver.ts"
+  },
+  "dependencies": {
+    "@metamask/smart-accounts-kit": "latest",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "viem": "2.31.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

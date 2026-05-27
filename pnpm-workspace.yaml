@@ -1,0 +1,4 @@
+packages:
+  - "spike"
+  - "apps/*"
+  - "packages/*"

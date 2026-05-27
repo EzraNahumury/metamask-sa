@@ -1,0 +1,23 @@
+{
+  "name": "delegate-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "DeleGate.AI — AI chief of staff for onchain money. Hackathon submission for MetaMask Smart Accounts Kit x 1Shot API x Venice AI Dev Cook Off.",
+  "scripts": {
+    "spike:venice": "pnpm --filter @delegate/spike run venice",
+    "spike:1shot": "pnpm --filter @delegate/spike run oneshot",
+    "spike:7702": "pnpm --filter @delegate/spike run upgrade7702",
+    "spike:7715": "pnpm --filter @delegate/spike run grant7715",
+    "spike:webhook": "pnpm --filter @delegate/spike run webhook",
+    "spike:all": "pnpm spike:venice && pnpm spike:1shot && pnpm spike:7702 && pnpm spike:7715"
+  },
+  "packageManager": "pnpm@10.7.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "overrides": {
+      "viem": "2.31.4"
+    }
+  }
+}
