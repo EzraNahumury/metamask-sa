@@ -229,7 +229,7 @@ relayer_send7710Transaction params = {
 - [x] Delegator implementation address resolved from `@metamask/delegation-deployments`.
 - [x] 7702 authorization signs cleanly with viem's `account.signAuthorization`.
 - [x] **First real 7710 redemption + 7702 upgrade landed onchain** — spike 07. tx hash `0xf199a88f1f7e2d28005365acd5ba63793d166c6b1d94cf77a2a807f53746052c`, cost 0.02 USDC, EOA now carries `0xef0100…` delegation pointer to the Stateless7702 impl.
-- [ ] Venice x402 inference call after a real $5 top-up (Day-1).
+- [x] **Venice x402 top-up + first inference call landed** — spike 08. EIP-3009 transferWithAuthorization moved 5 USDC from burner to Venice `payTo` (`0x2670…293f`), `/x402/top-up` returned `{amountCredited:5,newBalance:5}`, follow-up `/chat/completions` returned 200 with a real model reply. Venice credit confirmed at $5.
 - [ ] Webhook receiver reachable via ngrok (manual step, no blocker risk).
 
 **Verdict: Day-0 GREEN + first Day-1 redemption GREEN.** All architectural unknowns
@@ -267,6 +267,42 @@ Key correctness rules discovered (each one cost us a probe):
   is accepted as-is once BigInts are JSON-serialised as strings.
 - The relayer returns the tx hash inline (`"0x…"` string), not a job id, when
   the tx is broadcast synchronously.
+
+## Spike 08 — Venice x402 top-up + inference (verified live)
+
+The x402 v2 payment payload Venice expects:
+
+```json
+{
+  "x402Version": 2,
+  "scheme": "exact",
+  "network": "eip155:8453",
+  "payload": {
+    "signature": "0x…",          // EIP-3009 signature over the auth typed data
+    "authorization": {
+      "from": "0x…",
+      "to": "0x2670b922ef37c7df47158725c0cc407b5382293f",
+      "value": "5000000",        // 5 USDC, 6 decimals
+      "validAfter": "0",
+      "validBefore": "<unix-30min-future>",
+      "nonce": "0x…32 bytes…"
+    }
+  }
+}
+```
+
+Encoding rules:
+- The whole payload is `JSON.stringify` → `Buffer.from(json).toString("base64")` → put in `X-402-Payment` header.
+- The EIP-3009 typed data domain uses `name: "USD Coin"`, `version: "2"`,
+  `chainId: 8453`, `verifyingContract: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`.
+- A fresh SIWE token (`X-Sign-In-With-X`) is required on every request, both
+  during top-up and on the actual inference call.
+
+Upstream SDK gotcha:
+- `x402@1.2.0` and `@1shotapi/x402@0.1.1` both expose `x402Version = 1` and use
+  v1 schema (`scheme`, `maxAmountRequired`, `network: "base"`).
+- Venice serves x402 v2 (`network: "eip155:8453"`, `amount`, `extra.{name,version}`).
+- Translating is fragile — we hand-build the payload until the SDK ships v2.
 
 ## Day-1 task carry-over
 

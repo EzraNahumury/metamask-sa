@@ -11,6 +11,7 @@
     "spike:webhook": "pnpm --filter @delegate/spike run webhook",
     "spike:venicex402": "pnpm --filter @delegate/spike run venicex402",
     "spike:first7710": "pnpm --filter @delegate/spike run first7710",
+    "spike:venice-topup": "pnpm --filter @delegate/spike run venice-topup",
     "spike:all": "pnpm spike:1shot && pnpm spike:venicex402"
   },
   "packageManager": "pnpm@10.7.0",

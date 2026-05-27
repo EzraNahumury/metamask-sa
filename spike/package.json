@@ -11,7 +11,8 @@
     "grant7715": "tsx 04-7715-grant.ts",
     "webhook": "tsx 05-webhook-receiver.ts",
     "venicex402": "tsx 06-venice-x402.ts",
-    "first7710": "tsx 07-first-7710-redemption.ts"
+    "first7710": "tsx 07-first-7710-redemption.ts",
+    "venice-topup": "tsx 08-venice-x402-topup.ts"
   },
   "dependencies": {
     "@1shotapi/client-sdk": "^1.1.9",
