@@ -25,24 +25,30 @@ import { createPublicClient, defineChain, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { banner, env, fail, ok, requireEnv } from "./_env.js";
 
-// We define Celo manually (without viem's legacy Celo block formatters) so
-// the kit's generic Chain accepts our publicClient. Celo is fully EVM-
-// equivalent post-L2 migration; the legacy formatters are unnecessary here.
-const celo = defineChain({
-  id: 42220,
-  name: "Celo",
-  nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
-  rpcUrls: { default: { http: ["https://forno.celo.org"] } },
-  blockExplorers: { default: { name: "Celoscan", url: "https://celoscan.io" } },
+// Plain Base definition without viem's chain-specific formatters so the kit's
+// generic Chain type accepts our publicClient cleanly.
+const base = defineChain({
+  id: 8453,
+  name: "Base",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://mainnet.base.org"] } },
+  blockExplorers: { default: { name: "BaseScan", url: "https://basescan.org" } },
 });
 
 type RpcRes<T> = { jsonrpc: "2.0"; id: number; result?: T; error?: { code: number; message: string } };
 
+// JSON replacer that converts BigInt → decimal string. The 1Shot relayer
+// expects all numeric fields as strings anyway, so this is the right shape.
+function bigintReplacer(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
 async function rpc<T>(method: string, params: unknown): Promise<T> {
+  const body = JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }, bigintReplacer);
   const res = await fetch(env.ONESHOT_RELAYER_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
+    body,
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text()}`);
   const json = (await res.json()) as RpcRes<T>;
@@ -59,7 +65,7 @@ async function main() {
   console.log(`  EOA address:    ${account.address}`);
 
   const publicClient = createPublicClient({
-    chain: celo,
+    chain: base,
     transport: http(env.CHAIN_RPC_URL),
   });
 
@@ -82,31 +88,25 @@ async function main() {
   });
   ok(`Smart account object created (impl=Stateless7702, address=${smartAccount.address})`);
 
-  // 2. Sign the 7702 authorization.
-  //    The contractAddress is the Stateless7702 delegator implementation.
-  //    The viem walletClient/account exposes signAuthorization for this.
-  //    NOTE: the actual delegator implementation address comes from the kit
-  //          and may vary per chain — when running this spike, log
-  //          `smartAccount.implementationAddress` if available and use it.
-  const implementationAddress =
-    (smartAccount as unknown as { implementationAddress?: `0x${string}` }).implementationAddress ??
-    // Fallback: read from a well-known kit export (will throw at runtime if undefined,
-    // surfacing the question early).
-    (await import("@metamask/smart-accounts-kit").then(
-      (m) => (m as unknown as { Stateless7702DelegatorAddress?: `0x${string}` }).Stateless7702DelegatorAddress,
-    ));
+  // 2. Resolve the EIP-7702 Stateless DeleGator implementation address from
+  //    the canonical @metamask/delegation-deployments registry (v1.3.0).
+  const { DELEGATOR_CONTRACTS } = await import("@metamask/delegation-deployments");
+  const deploymentVersion = "1.3.0";
+  const implementationAddress = DELEGATOR_CONTRACTS[deploymentVersion]?.[base.id]?.[
+    "EIP7702StatelessDeleGatorImpl"
+  ] as `0x${string}` | undefined;
 
   if (!implementationAddress) {
     throw new Error(
-      "Could not resolve the Stateless7702 delegator address from the kit. Check the kit docs/changelog and pin a known address for this chain in SPIKE.md.",
+      `EIP7702StatelessDeleGatorImpl not found in DELEGATOR_CONTRACTS["${deploymentVersion}"][${base.id}]. Run \`pnpm tsx probe-delegator-addr.ts\` to inspect available deployments.`,
     );
   }
-  console.log(`  delegator impl: ${implementationAddress}`);
+  console.log(`  delegator impl: ${implementationAddress} (deployment ${deploymentVersion})`);
 
   // 3. Build the authorization list entry. With viem ≥ 2.21 we use signAuthorization.
   const nonce = await publicClient.getTransactionCount({ address: account.address });
   const auth = await account.signAuthorization({
-    chainId: celo.id,
+    chainId: base.id,
     contractAddress: implementationAddress,
     nonce,
   });
@@ -119,7 +119,7 @@ async function main() {
   //
   //    For this no-op upgrade we send a self-call with empty calldata.
   const txParams = {
-    chainId: String(celo.id),
+    chainId: String(base.id),
     feeToken: env.ONESHOT_FEE_TOKEN,
     authorizationList: [auth],
     delegation: null,                     // first-use: no 7710 delegation yet, just the upgrade

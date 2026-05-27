@@ -21,15 +21,15 @@ import { createWalletClient, defineChain, http, parseUnits } from "viem";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { banner, env, fail, ok } from "./_env.js";
 
-const celo = defineChain({
-  id: 42220,
-  name: "Celo",
-  nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
-  rpcUrls: { default: { http: ["https://forno.celo.org"] } },
-  blockExplorers: { default: { name: "Celoscan", url: "https://celoscan.io" } },
+const base = defineChain({
+  id: 8453,
+  name: "Base",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://mainnet.base.org"] } },
+  blockExplorers: { default: { name: "BaseScan", url: "https://basescan.org" } },
 });
 
-const CELO_USDC = "0xceba9300f2b948710d2653dd7b07f33a8b32118c" as const;
+const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
 async function main() {
   banner("Spike 04 — ERC-7715 permission grant shape check");
@@ -47,7 +47,7 @@ async function main() {
 
   const permissionRequest = [
     {
-      chainId: celo.id,
+      chainId: base.id,
       expiry: oneWeek,
       signer: {
         type: "account",
@@ -56,7 +56,7 @@ async function main() {
       permission: {
         type: "erc20-token-periodic",
         data: {
-          tokenAddress: CELO_USDC,
+          tokenAddress: BASE_USDC,
           // $50 weekly cap
           periodAmount: parseUnits("50", 6).toString(),
           periodDuration: 7 * 24 * 60 * 60,
@@ -76,7 +76,7 @@ async function main() {
   try {
     const { erc7715ProviderActions } = await import("@metamask/smart-accounts-kit/actions");
     const walletClient = createWalletClient({
-      chain: celo,
+      chain: base,
       transport: http(env.CHAIN_RPC_URL),
       account: sessionAccount,
     }).extend(erc7715ProviderActions());

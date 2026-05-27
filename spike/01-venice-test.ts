@@ -57,25 +57,38 @@ async function testChat() {
 }
 
 async function testImage() {
-  const out = (await veniceFetch("/image/generations", {
+  // Venice native image endpoint is /image/generate (not OpenAI-style /images/generations).
+  // Discovered via probe-venice-image.ts during Day-0 spike.
+  const out = (await veniceFetch("/image/generate", {
     model: env.VENICE_IMAGE_MODEL,
     prompt: "editorial minimalist line chart, weekly spending overview, soft pastel palette",
     width: 1024,
     height: 576,
-    n: 1,
-  })) as { data?: Array<{ url?: string; b64_json?: string }> };
+  })) as {
+    images?: string[];                                  // base64 strings
+    data?: Array<{ url?: string; b64_json?: string }>;  // possible alt shape
+  };
 
+  // Venice returns `images: [base64, ...]`.
+  if (out.images && out.images.length > 0) {
+    const buf = Buffer.from(out.images[0]!, "base64");
+    const outPath = path.resolve("output", "spike-venice-image.png");
+    await writeFile(outPath, buf);
+    ok(`image saved to ${outPath} (${buf.length} bytes)`);
+    return;
+  }
+
+  // Fallback: OpenAI-like shape, just in case the response format changes.
   const first = out.data?.[0];
-  if (!first) throw new Error("No image returned");
-  if (first.b64_json) {
+  if (first?.b64_json) {
     const buf = Buffer.from(first.b64_json, "base64");
     const outPath = path.resolve("output", "spike-venice-image.png");
     await writeFile(outPath, buf);
     ok(`image saved to ${outPath} (${buf.length} bytes)`);
-  } else if (first.url) {
+  } else if (first?.url) {
     ok(`image url: ${first.url}`);
   } else {
-    throw new Error("Image returned but contained neither b64_json nor url");
+    throw new Error("Image response shape unknown: " + JSON.stringify(out).slice(0, 200));
   }
 }
 

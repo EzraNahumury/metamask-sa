@@ -9,7 +9,8 @@
     "spike:7702": "pnpm --filter @delegate/spike run upgrade7702",
     "spike:7715": "pnpm --filter @delegate/spike run grant7715",
     "spike:webhook": "pnpm --filter @delegate/spike run webhook",
-    "spike:all": "pnpm spike:venice && pnpm spike:1shot && pnpm spike:7702 && pnpm spike:7715"
+    "spike:venicex402": "pnpm --filter @delegate/spike run venicex402",
+    "spike:all": "pnpm spike:1shot && pnpm spike:venicex402"
   },
   "packageManager": "pnpm@10.7.0",
   "engines": {
