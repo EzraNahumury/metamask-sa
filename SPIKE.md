@@ -223,20 +223,50 @@ relayer_send7710Transaction params = {
 
 ## Foundation go/no-go
 
-DeleGate.AI Day-1 can only start when:
-
 - [x] 1Shot capabilities + fee data come back for our chosen chain + token (Base 8453, USDC).
 - [x] 7715 grant request payload type-checks against the kit.
 - [x] Venice x402 SIWE auth returns the payment-requirements payload.
 - [x] Delegator implementation address resolved from `@metamask/delegation-deployments`.
 - [x] 7702 authorization signs cleanly with viem's `account.signAuthorization`.
-- [ ] First real 7710 redemption + 7702 upgrade lands onchain (deferred to Day-1; needs `permissionContext` encoding).
-- [ ] Venice x402 inference call after a real $5 top-up (deferred to Day-1; needs `X-402-Payment` header).
-- [ ] Webhook receiver reachable via ngrok (deferred — manual step, no blocker risk).
+- [x] **First real 7710 redemption + 7702 upgrade landed onchain** — spike 07. tx hash `0xf199a88f1f7e2d28005365acd5ba63793d166c6b1d94cf77a2a807f53746052c`, cost 0.02 USDC, EOA now carries `0xef0100…` delegation pointer to the Stateless7702 impl.
+- [ ] Venice x402 inference call after a real $5 top-up (Day-1).
+- [ ] Webhook receiver reachable via ngrok (manual step, no blocker risk).
 
-**Verdict: Day-0 GREEN.** All blockers that could have killed the project
-(wrong chain, broken SDK, unsupported primitive) are resolved. The remaining
-items are well-scoped Day-1 implementation tasks, not unknowns.
+**Verdict: Day-0 GREEN + first Day-1 redemption GREEN.** All architectural unknowns
+are resolved. Remaining tasks are well-scoped implementation, not unknowns.
+
+## Spike 07 — canonical schema (verified live)
+
+This is the request that successfully landed a 7702 upgrade + 7710 redemption
+on Base mainnet via the public 1Shot relayer:
+
+```ts
+{
+  chainId: "8453",
+  context: <fee.context JSON string from relayer_getFeeData>,
+  authorizationList: [<viem-shape signed 7702 authorization>],   // max 1
+  transactions: [
+    {
+      permissionContext: [<plain SignedDelegation object>],      // NOT hex
+      executions: [
+        { target: USDC, value: "0", data: <ERC20.transfer calldata> }
+      ]
+    }
+  ]
+}
+```
+
+Key correctness rules discovered (each one cost us a probe):
+- The field is `context`, not `feeContext`.
+- `permissionContext` is an array of plain `Delegation7710` objects (delegate,
+  delegator, authority, caveats, salt, signature). It is **not** the
+  hex-encoded blob returned by `encodeDelegations`.
+- Each `transactions[i]` carries its own `permissionContext[]` and `executions[]`.
+- `authorizationList` accepts at most one entry; viem's
+  `account.signAuthorization` output (`{ address, chainId, nonce, r, s, v, yParity }`)
+  is accepted as-is once BigInts are JSON-serialised as strings.
+- The relayer returns the tx hash inline (`"0x…"` string), not a job id, when
+  the tx is broadcast synchronously.
 
 ## Day-1 task carry-over
 

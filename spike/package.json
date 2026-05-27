@@ -10,9 +10,13 @@
     "upgrade7702": "tsx 03-7702-upgrade.ts",
     "grant7715": "tsx 04-7715-grant.ts",
     "webhook": "tsx 05-webhook-receiver.ts",
-    "venicex402": "tsx 06-venice-x402.ts"
+    "venicex402": "tsx 06-venice-x402.ts",
+    "first7710": "tsx 07-first-7710-redemption.ts"
   },
   "dependencies": {
+    "@1shotapi/client-sdk": "^1.1.9",
+    "@1shotapi/x402": "^0.1.1",
+    "@1shotapi/x402-facilitator": "^2.0.0",
     "@metamask/delegation-deployments": "^1.3.0",
     "@metamask/smart-accounts-kit": "latest",
     "dotenv": "^16.4.5",
