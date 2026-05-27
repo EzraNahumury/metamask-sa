@@ -1,629 +1,657 @@
-# BRIGADE
-### An autonomous agent brigade for creators — one click hires an AI workforce that pays itself.
+<div align="center">
 
-> Submission for **MetaMask Smart Accounts Kit × 1Shot API × Venice AI Dev Cook Off**.
-> Target tracks: **Best Agent** (primary) · **Best A2A Coordination** (primary) · **Best x402 + ERC-7710** (primary) · **Best use of Venice AI** (bonus) · **Best Use of 1Shot Permissionless Relayer** (bonus).
-> Stackable prize ceiling targeted: **$7,000**.
+# DeleGate.AI
+### Your AI Chief of Staff for onchain money — bounded, revocable, and finally trustworthy.
 
----
+*Submission for the* ***MetaMask Smart Accounts Kit × 1Shot API × Venice AI Dev Cook Off***
 
-## 0. TL;DR for the impatient judge
+**Target prize tracks**
+`Best Agent` (primary) · `Best x402 + ERC-7710` (primary) · `Best Use of Venice AI` (bonus) · `Best Use of 1Shot Permissionless Relayer` (bonus)
 
-You type one line: *"make me a 45-second lofi music video about a samurai cat fighting the banking system."*
+**Realistic stackable prize ceiling: $5,000**
 
-You click once.
-
-Behind the scenes, a **Conductor agent** spins up, decomposes the brief, and hires a **brigade of specialist sub-agents** — Scriptwriter, StoryboardArtist, Composer, VoiceActor, MotionAnimator, Editor — each one is a real **MetaMask Smart Account** running on its own wallet.
-
-The Conductor doesn't push tokens to them. It **redelegates** a slice of your bounded budget (ERC-7710) with caveats (max spend, expiry, allowed callees). Each specialist exposes an HTTP service that returns **HTTP 402 Payment Required** with a price quote. The Conductor pays via x402 using the redelegated scope. Specialists call **Venice AI** endpoints (text, image, music, audio, video) to actually produce the work. All gas is paid in USDC through the **1Shot Permissionless Relayer**, so neither you nor the agents ever touch ETH. Unused budget is auto-refunded by revoking remaining delegations at the end.
-
-Live on screen: a real-time **swarm graph** showing delegations as arrows, x402 calls as money flows, Venice calls as glowing nodes. Forty-five seconds later, the actual video plays.
-
-This is what an **agent-native economy** looks like when smart accounts, gas abstraction, permissionless intelligence, and HTTP-payable services finally compose into one product.
+</div>
 
 ---
 
-## 1. Hackathon Deconstruction (what the sponsors actually want)
+## 0. The 30-second pitch
 
-I read the requirements like a judge would, not like a participant would.
+You hand your AI agent **one** thing: a weekly USDC budget with a hard cap, an expiry, and a list of services it is allowed to pay. That's it. No card, no seed phrase, no "trust me bro".
 
-### 1.1 What each sponsor *secretly* wants you to build
+DeleGate.AI then becomes your **autonomous chief of staff for money**. Every week it:
 
-| Sponsor | Stated track | Hidden ask | What they will reward |
+1. Reviews every subscription you've authorized.
+2. Decides — out loud, with Venice-powered reasoning — whether to pay, cancel, or escalate.
+3. Pays approved invoices via **x402** using its **ERC-7710 redelegation** from your **MetaMask Smart Account**.
+4. Files a **weekly digest** as text + a generated chart image + a voice-narrated summary (three Venice endpoints, one report).
+5. Flags anomalies the moment they happen — a 10× price jump, an unknown callee, a suspicious quote — and **refuses to pay** until you approve.
+
+When the budget expires, the leftover automatically comes back to you. When you want to revoke, one tap kills the agent's authority instantly.
+
+This is what "AI agent with a wallet" was supposed to mean.
+
+---
+
+## 1. Hackathon Deconstruction — what the sponsors actually want
+
+| Sponsor | Their stated track | What they secretly want | How DeleGate.AI delivers |
 |---|---|---|---|
-| **MetaMask** | Smart Accounts / 7715 perms in main flow | Prove that **agentic UX is finally safe and pleasant** using their delegation primitives. They are not paying $9K to see another DEX. | Apps where delegations feel **load-bearing**, revocable, scoped, multi-hop. Bonus if your story matches their public roadmap of "smart accounts as the operating system of agentic finance". |
-| **1Shot API** | Permissionless relayer + 7702 upgrade + 7710 mainnet relay | The docs literally tell you: *"You could even build your own x402 7710 facilitator on top of the 1Shot public relayer."* That's not a hint — that's a **bounty pre-announcement**. They want a **flagship reference implementation** of x402↔7710 plumbing that other teams will copy after the hackathon. | Projects that use **webhooks** for tx state, that relay via mainnet (not just testnet theater), and that ship a reusable facilitator pattern. |
-| **Venice AI** | Permissionless intelligence | They are tired of being treated as "ChatGPT but uncensored". They want demos that exploit **multiple endpoints** (text + image + audio + music + video + crypto RPC) and prove their multimodal stack is the brain of a real product. Multi-endpoint usage is explicitly called out as scoring higher. | Projects where Venice is the **default neural substrate** for autonomous agents, not just a chat completion. |
+| **MetaMask** | Smart Accounts / ERC-7715 advanced permissions in main flow | Proof that delegations make agentic UX **safe and pleasant**, not janky. They are not paying $9K to see another DEX. | Every action the agent takes is a **scoped, expiring, revocable** delegation. Revocation is a one-tap front-and-center feature, not a buried setting. |
+| **1Shot API** | Permissionless relayer + 7702 upgrade + 7710 mainnet relay + webhooks | A **flagship reference** for the x402↔7710 facilitator pattern hinted at in their docs. | Our agent **is** an x402↔7710 facilitator. Every onchain action — 7702 upgrade, delegation, payment, revocation — is broadcast via 1Shot. Gas paid in USDC. Webhooks drive UI state. |
+| **Venice AI** | Permissionless intelligence across many endpoints | Demos that exploit **multiple endpoints**, not just `chat.completions`. | Our weekly digest uses **text** (reasoning), **image** (generated spending chart), and **audio** (TTS narration). Anomaly detection uses Venice text with a guardrail prompt. |
 
-### 1.2 What other teams will ship (so we avoid it)
-
-Predictable bucket of submissions, based on the prompt structure:
-
-1. *"AI chatbot in your wallet"* — write Solidity by chat, sign by chat. Boring. 30+ teams will ship this.
-2. *"Autonomous DeFi yield agent"* — gives Venice an LP strategy and a delegation. Done a hundred times in other hackathons.
-3. *"AI trading bot with stop-loss"* — same as above with a different skin.
-4. *"AI subscription manager"* — recurring 7710 payments to Netflix/Spotify-clone. Demo-able but feels like a tutorial.
-5. *"AI portfolio rebalancer"* — yawn.
-6. *"AI NFT minter"* — Venice generates art, agent mints. Single-modality, single-tx.
-7. *"AI tip-bot for creators"* — single x402 flow, no real delegation depth.
-8. *"Agent that posts to X/Lens"* — no onchain depth.
-9. *"AI legal/tax assistant"* — Venice text only, single endpoint, no agent commerce.
-10. *"Multi-sig with AI co-signer"* — interesting but not a wow demo.
-
-If our project even slightly resembles any of these, we lose.
-
-### 1.3 The opportunity gap
-
-The composition that **almost nobody** will hit cleanly:
-
-- **A multi-agent swarm** where redelegation is *the* substrate (not a footnote) — covers A2A.
-- Agents that **buy services from each other** over **x402+7710** — covers x402+7710.
-- A swarm with a **visible, narratable user-facing product** — covers Best Agent (judges actually feel something).
-- Where the production loop uses **5+ Venice endpoints** (text, image, music, audio, video) — maximum Venice scoring.
-- Where all gas flows through 1Shot in stablecoins and **7702-upgrades** the user EOA → smart account on first run — maximum 1Shot scoring.
-
-That's exactly **BRIGADE**. Every primitive earns its place.
-
-### 1.4 The hidden leverage we exploit
-
-| Leverage | How we exploit it |
-|---|---|
-| Stackable prize math: $3K main + $3K Venice + $1K 1Shot = $7K | We design a single project that satisfies all three simultaneously, not three projects in a trench coat. |
-| Venice multi-endpoint scoring rule | Our specialist agents map 1:1 to Venice endpoints — every endpoint is load-bearing. |
-| 1Shot's "build your own x402 7710 facilitator" hint | The Conductor agent **is** an x402 7710 facilitator. We're literally building the thing they hinted at. |
-| Redelegation depth is rare in demos | We show 3 hops: User → Conductor → Specialist → (optional) Sub-specialist. Every other team will do 1 hop. |
-| Judges have 30 seconds of attention | Our demo opens with a typed brief and ends with a played video. Visceral, no jargon. |
-| "Cook off" branding | Brigade = kitchen brigade. The metaphor sells itself: Head chef → sous chefs → line cooks. |
+**Why this combination is rare**: most teams will ship either a chat agent (no money), a DeFi bot (no intelligence layer), or a single-modality showcase (no breadth). DeleGate.AI is the only common-sense consumer story where MetaMask permissions, 1Shot relaying, and Venice multimodality all carry weight.
 
 ---
 
-## 2. Idea Space Exploration (the 15 we considered)
+## 2. Idea Exploration — the 15 we considered
 
-I generated 15 distinct ideas across the requested angles, scored, and brutally narrowed down. Scores are 1–10.
+We generated 15 candidates across agent, security, DAO, social, creator, prediction-market, and infra angles. Scores out of 10.
 
-| # | Name | One-liner | Wow | Tech moat | Demo impact | Viral | Difficulty | Verdict |
-|---|---|---|---|---|---|---|---|---|
-| 1 | **BRIGADE** | Conductor agent hires specialist sub-agents via redelegation + x402 to produce media | 10 | 9 | 10 | 9 | 8 | **WINNER** |
-| 2 | Hermes | A2A commerce protocol / open registry where agents sell services to each other | 8 | 9 | 6 | 6 | 7 | Too infra, no consumer story for judges |
-| 3 | DeleGate.AI | Personal AI CFO managing weekly budget via 7715 perms | 7 | 6 | 7 | 8 | 6 | Solid but single-modality on Venice |
-| 4 | Conclave | AI DAO governance: multiple AI delegates debate + vote on behalf of real voters | 8 | 8 | 7 | 7 | 8 | Niche, judges may not feel it |
-| 5 | Aegis | AI security guardian — Venice multimodal watches your 7715 grants for drainer patterns | 8 | 7 | 8 | 8 | 7 | Defensive; harder to slot into Best Agent |
-| 6 | Spectra | AI agent that trades prediction markets on your behalf | 6 | 6 | 7 | 7 | 5 | Generic, many will ship this |
-| 7 | WitnessAI | Decentralized AI oracle network paid via x402 for consensus answers | 8 | 9 | 6 | 6 | 9 | Too infra, demo is text walls |
-| 8 | Genesis Studios | Pure media creator pipeline (subset of BRIGADE) | 8 | 7 | 9 | 8 | 6 | BRIGADE absorbs this |
-| 9 | Reverie | Overnight agent: research + trade + brief while you sleep | 6 | 6 | 6 | 6 | 5 | Lots of teams will ship this |
-| 10 | Sherpa | Onboarding agent that walks new user through first onchain actions | 7 | 5 | 7 | 7 | 4 | Good problem, weak demo flex |
-| 11 | Vault Whisperer | Dead-man-switch estate planning via 7710 | 7 | 6 | 7 | 8 | 5 | Emotionally interesting but single-tx |
-| 12 | Cathedral | Multi-agent code review/CI swarm paid in x402 | 7 | 8 | 6 | 5 | 7 | Niche dev tool, judges aren't engineers |
-| 13 | Echo | AI memecoin lore launchpad (Venice generates story+art+music) | 6 | 5 | 8 | 9 | 5 | Cringe risk; could backfire with judges |
-| 14 | Praxis | AI legal assistant reading ToS + signing 7715 perms automatically | 6 | 6 | 6 | 5 | 7 | Vague demo, no payment flow |
-| 15 | OmniMesh | A2A interop layer between agents from different protocols | 7 | 9 | 5 | 5 | 9 | Pure infra; no narrative |
+| # | Name | One-liner | Wow | Demo impact | Difficulty | Verdict |
+|---|---|---|---|---|---|---|
+| 1 | **DeleGate.AI** | AI chief of staff with weekly budget caps | 8 | 9 | 4 | **WINNER — best risk-adjusted** |
+| 2 | BRIGADE | Conductor hires specialist sub-agents via redelegation + x402 | 10 | 10 | 9 | High ceiling, high build risk → see Appendix |
+| 3 | Hermes | A2A commerce / open agent registry | 8 | 6 | 7 | Too infra; no consumer story |
+| 4 | Conclave | AI DAO governance delegates | 8 | 7 | 8 | Niche; judges may not feel it |
+| 5 | Aegis | AI security guardian over 7715 grants | 8 | 8 | 7 | Defensive; awkward fit for Best Agent |
+| 6 | Spectra | AI agent trading prediction markets | 6 | 7 | 5 | Generic; many will ship this |
+| 7 | WitnessAI | Decentralized AI oracle network paid via x402 | 8 | 6 | 9 | Pure infra; demo is text walls |
+| 8 | Genesis Studios | Creator-pipeline subset of BRIGADE | 8 | 9 | 6 | Subsumed by BRIGADE |
+| 9 | Reverie | Overnight research/trade/brief agent | 6 | 6 | 5 | Many will ship this |
+| 10 | Sherpa | Onboarding agent that walks you through first onchain action | 7 | 7 | 4 | Easy, but weak demo flex |
+| 11 | Vault Whisperer | Dead-man-switch estate planning | 7 | 7 | 5 | Single-tx; emotional but thin |
+| 12 | Cathedral | Multi-agent code review CI swarm | 7 | 6 | 7 | Niche dev tool |
+| 13 | Echo | AI memecoin lore launchpad | 6 | 8 | 5 | Cringe risk |
+| 14 | Praxis | AI legal assistant signing 7715 perms | 6 | 6 | 7 | Vague demo, no payment flow |
+| 15 | OmniMesh | A2A interop layer across protocols | 7 | 5 | 9 | Pure infra |
 
-### 2.1 Why BRIGADE dominates
+### Why DeleGate.AI won on the second pass
 
-It is the only idea that:
-- naturally consumes **5 Venice endpoints** in the main flow,
-- is a **redelegation tree by construction** (not bolted on),
-- treats **x402** as the agent↔agent payment rail (not a UX gimmick),
-- requires a **7702 upgrade** of the user EOA (1Shot bonus is hit cleanly),
-- and produces a **playable artifact** in the demo that the judge can watch with their eyes.
+The first pass picked BRIGADE (ceiling = $7K). On the **deliverability second pass**, BRIGADE's risk profile (6 specialist services, Venice video, 3-hop redelegation, swarm UI) is too aggressive for a small team in a 7-10 day window. DeleGate.AI keeps the same sponsor-primitive coverage with a **single-agent, single-user** scope that we can absolutely ship — and that we can absolutely demo without it breaking on stage.
 
-Every other idea hits at most 3 of those 5.
+**BRIGADE survives as the v2 vision** in the appendix: same architectural family, same payment substrate, same Venice stack. DeleGate.AI is BRIGADE's atomic unit. Ship the atom first.
 
 ---
 
-## 3. Final Selection — Deep Breakdown
+## 3. Final Selection — DeleGate.AI deep breakdown
 
 ### 3.1 Identity
 
-- **Project name:** **BRIGADE**
-- **Tagline:** *Hire an entire AI workforce in one click. They pay each other and refund what they don't use.*
+- **Name:** **DeleGate.AI**
+- **Tagline:** *Your AI chief of staff for onchain money — bounded, revocable, and finally trustworthy.*
 - **Elevator pitch (≤ 30 sec):**
-  > "Building anything creative today means stitching ChatGPT, Midjourney, Suno, ElevenLabs, CapCut, and Stripe together by hand. Brigade replaces all of that with a single delegation. You give one Conductor agent a budget, it hires a brigade of specialist AI agents — each is a real smart account — and they pay each other onchain over x402 to deliver the finished work. Gas is in USDC via 1Shot. Brains are Venice. Permissions are MetaMask Smart Accounts. The whole agent economy, in one product."
+  > "Every AI agent today either has none of your money or all of your money. DeleGate.AI sits in the middle. You give it a weekly USDC budget through a MetaMask ERC-7715 permission with hard caps and an expiry. It pays your subscriptions over x402, generates a weekly text + chart + voice digest, and flags any anomaly before it sends a single dollar. Revocable in one tap. This is what agentic finance is supposed to feel like."
 
-### 3.2 Core Problem
+### 3.2 The core problem
 
-Today's "AI workflow" has three rotten layers:
+| Today's reality | Why it hurts |
+|---|---|
+| Stripe-style cards — agent gets all your money | One bad prompt drains everything |
+| Allowance hacks — approve infinity to a contract | Same problem, worse — also onchain |
+| Manual subscription audit — you do it yourself | $240/mo creator stack, no one reconciles |
+| Anomaly detection — non-existent for agents | Agent silently overpays, you find out next month |
+| Revoke = cancel card + call CS | Days, not seconds |
 
-1. **No safe budgeting.** When you give an agent your card, you give it everything. The kill switch is "cancel the card".
-2. **No native payment between agents.** Every "multi-agent" framework today (LangGraph, CrewAI, AutoGen) is just function calls inside one process. There is no money, no accountability, no replaceability.
-3. **No interoperability.** A "writer" agent built by team A cannot transact with an "illustrator" agent built by team B, because there is no shared rail.
+ERC-7715 (advanced permissions) + ERC-7710 (delegation) + x402 (HTTP payment) + 1Shot (gas in USDC) finally make a **bounded, revocable, accountable** money agent possible. DeleGate.AI is the consumer wrapper on top of those primitives.
 
-MetaMask Smart Accounts (scoped, revocable budgets) + ERC-7710 redelegation (real money handoff) + x402 (HTTP-native payment) + 1Shot (no gas friction) finally make a **payable, replaceable, accountable agent workforce** possible. Brigade is the first product built on that stack.
+### 3.3 Why this matters *now*
 
-### 3.3 Why this problem matters now
+- ERC-7715 ships to mainstream MetaMask users imminently. The first **clear consumer narrative** for it sets the meme.
+- Agent-payment standards (x402, Stripe Agent Toolkit, AP2) are racing for the substrate. The first product that **uses x402 in production for real value** earns reference-implementation status.
+- Subscription fatigue is at all-time highs. A "kill switch with a brain" is something normies actually want.
 
-- The agent market is at the "AOL keyword" phase: every brand is racing to ship "an agent". None of them can hire each other. The first **payment substrate** that wins becomes the rails for the entire AI economy. Brigade is a reference implementation of those rails.
-- Creators are drowning in subscription bills ($240/mo on AI tools is normal) and still doing the orchestration manually. Brigade replaces that bill with a per-job cost in USDC.
-- Smart accounts + 7715 are about to ship to MetaMask mainstream users. The first compelling consumer demo that uses them sets the meme for the year.
-
-### 3.4 Existing solutions and why they're broken
+### 3.4 Existing solutions and why they break
 
 | Today | Why broken |
 |---|---|
-| CrewAI / LangGraph / AutoGen | Multi-agent in one process. No money, no replaceability, no scope, no accountability. |
-| ChatGPT + plugins | One brain, no specialization, no payment to third-party agents. |
-| Zapier / Make | Deterministic, no autonomy, no agent economy. |
-| Manual creator stack (Midjourney + Suno + CapCut) | Per-tool subs, manual handoff, no scope. |
-| Stripe Agent Toolkit | Account-level credentials, no scope, no redelegation depth. |
+| Apple/Google subscription managers | Just a list. No reasoning. No revoke at the credential layer. |
+| Mint, YNAB, Copilot | Read-only. Cannot act. Cannot refuse to pay. |
+| Stripe Agent Toolkit | Account-level credentials. No scope, no caveats, no expiry. |
+| AutoGPT / agent CLIs with seed phrase | Full custody. One bad prompt = drained. |
+| Crypto subscription dApps (Sablier, Superfluid) | Pure streaming, no reasoning, no anomaly catch. |
 
-### 3.5 Why BRIGADE is revolutionary
+### 3.5 Why DeleGate.AI is different
 
-1. **Money is the protocol.** Agents are not function calls — they are addresses with wallets. If you don't pay, you don't get the result.
-2. **Scope is enforceable.** Every redelegation carries caveats (max spend, expiry, allowed callees). A misbehaving sub-agent can drain at most its slice.
-3. **Replaceability.** The "StoryboardArtist" role is an interface. Anyone can deploy a competing implementation; the Conductor picks the cheapest qualified one.
-4. **Refunds for free.** Whatever a specialist doesn't spend stays inside the delegation; at the end the Conductor revokes the remaining scope and the budget returns to the user. No "credits expire next month".
-5. **A real agent labor market.** Every job emits an attestation; over time we get an onchain reputation graph for agents. (Post-MVP, but architected for it.)
-
-### 3.6 User Journey (detailed)
-
-```
-[User opens app, signs in with MetaMask Embedded Wallet (EOA)]
-        │
-        ▼
-[Brigade detects: account is not yet a smart account]
-[One-tap: "Upgrade your account so it can supervise agents"]
-   → ERC-7702 authorization signed
-   → 1Shot Permissionless Relayer broadcasts upgrade tx (gas paid in USDC)
-   → Webhook fires "AccountUpgraded"
-        │
-        ▼
-[User chooses budget cap: e.g. $5 in USDC]
-[User signs ERC-7710 delegation to the Conductor agent]
-   caveats:
-     - maxSpend  = $5
-     - expiresAt = now + 1h
-     - allowedCallees = [BrigadeRegistry, USDC.transfer]
-        │
-        ▼
-[User types brief: "45s lofi music video, samurai cat vs banks"]
-[Hit "Hire Brigade"]
-        │
-        ▼
-[Conductor (Venice text) decomposes brief into a Job DAG]
-   - ScriptwriterJob   → priceQuote
-   - StoryboardJob     → priceQuote
-   - ComposerJob       → priceQuote
-   - VoiceActorJob     → priceQuote
-   - MotionJob         → priceQuote
-   - EditorJob         → priceQuote
-        │
-        ▼
-[For each Job, Conductor:]
-   1. Queries the BrigadeRegistry for qualified specialists.
-   2. HTTP GET to specialist endpoint → receives 402 Payment Required + quote.
-   3. Redelegates a sub-budget (caveats: maxSpend = quote, expiresAt = now + 5min)
-      to the specialist's smart account.
-   4. POSTs the x402 payment proof + job payload.
-   5. Specialist calls Venice API, returns result + IPFS CID.
-        │
-        ▼
-[All specialists checkpoint their outputs to IPFS]
-[Editor agent pulls all artifacts, calls Venice video stitcher,
- returns final video CID]
-        │
-        ▼
-[Conductor returns video URL to user]
-[Conductor revokes all unused sub-delegations]
-[Frontend renders the final video + a receipt:
-   - 6 agents hired
-   - $4.18 spent (of $5 budget)
-   - $0.82 refunded
-   - 11 x402 calls
-   - 4 Venice endpoints used
-   - 12 onchain txs relayed by 1Shot in USDC]
-```
-
-### 3.7 Demo flow that mugs the judges
-
-(See §5 for the script; the architectural points it must show are:)
-
-- **Live swarm visualization** — a graph view where nodes are agent smart accounts, arrows are redelegations, and animated tokens flow as x402 calls fire.
-- **Real onchain txs** — each agent's address is a clickable link to a block explorer.
-- **Revocation moment** — at the end, watch the unused delegations turn red and revert.
-- **Final artifact** — the actual mp4 plays.
-
-### 3.8 Technical architecture (full stack)
-
-```
-┌──────────────────────────── FRONTEND ─────────────────────────────┐
-│ Next.js 14 + React 18 + wagmi v2 + viem                           │
-│ MetaMask Embedded Wallet (Dynamic SDK signer)                     │
-│ TailwindCSS + shadcn/ui                                           │
-│ Swarm visualization: React Flow + Framer Motion                   │
-└────────────────────────────┬───────────────────────────────────────┘
-                             │
-┌────────────────────────────▼───────────────────────────────────────┐
-│                  CONTROL PLANE (Node + tRPC)                      │
-│ - Conductor orchestrator (LangGraph-style state machine)           │
-│ - Job DAG planner (Venice text)                                    │
-│ - Registry of specialists (postgres + onchain mirror)              │
-│ - 1Shot webhook receiver                                           │
-│ - x402 facilitator middleware                                      │
-└──────────────┬──────────────────────────┬──────────────────────────┘
-               │                          │
-   ┌───────────▼─────────────┐ ┌──────────▼─────────────┐
-   │  MetaMask Smart         │ │  1Shot Permissionless  │
-   │  Accounts Kit (SDK)     │ │  Relayer (mainnet)     │
-   │  - signer agnostic      │ │  - gas in USDC         │
-   │  - DelegationManager    │ │  - 7702 upgrade        │
-   │  - caveat builder       │ │  - 7710 broadcast      │
-   │  - redelegation         │ │  - webhooks            │
-   └─────────────────────────┘ └────────────────────────┘
-               │                          │
-               └────────────┬─────────────┘
-                            │
-              ┌─────────────▼──────────────┐
-              │   SPECIALIST AGENT FLEET   │
-              │ (one Node service per role)│
-              │                            │
-              │ Scriptwriter  → Venice text│
-              │ Storyboard    → Venice img │
-              │ Composer      → Venice mus │
-              │ VoiceActor    → Venice aud │
-              │ Motion        → Venice vid │
-              │ Editor        → Venice vid │
-              │                            │
-              │ each exposes:              │
-              │  GET  /quote               │
-              │  POST /run                 │
-              │  HTTP 402 if unpaid        │
-              └─────────────┬──────────────┘
-                            │
-                ┌───────────▼────────────┐
-                │     VENICE AI API      │
-                │  text·image·audio·     │
-                │  music·video           │
-                └────────────────────────┘
-```
-
-### 3.9 How each sponsor primitive is used (auditable mapping)
-
-| Sponsor primitive | Where it lives in BRIGADE |
-|---|---|
-| **MetaMask Smart Accounts Kit — Smart Accounts** | Every actor is a smart account: the user (after 7702 upgrade), the Conductor, every specialist. |
-| **MetaMask Smart Accounts Kit — ERC-7715 Advanced Permissions** | When the user runs Brigade from the MetaMask extension, the "grant budget" prompt is rendered via ERC-7715 with caveats: `maxSpend`, `expiresAt`, `allowedCallees`. |
-| **MetaMask Smart Accounts Kit — ERC-7710 Redelegation** | Conductor → Specialist is a redelegation with tighter caveats. For multi-step jobs (e.g., Editor calls SubEditor), we demonstrate a 3rd hop. |
-| **1Shot Permissionless Relayer** | Every onchain tx — the 7702 upgrade, the user→Conductor delegation, every redelegation, every revocation — is broadcast via 1Shot. Gas paid in USDC, no ETH anywhere. |
-| **1Shot webhooks** | We subscribe to `TransactionSubmitted` / `TransactionConfirmed` and use them as the source-of-truth state stream for the orchestrator (no polling). |
-| **x402 + ERC-7710 facilitator** | Our Conductor literally **is** an x402↔7710 facilitator: it receives 402 quotes, packages a 7710 redelegation as the payment proof, and submits payment via 1Shot. We open-source the facilitator module. |
-| **Venice AI — text** | Conductor decomposition + Scriptwriter + Storyboard prompts. |
-| **Venice AI — image** | StoryboardArtist generates keyframes. |
-| **Venice AI — music** | Composer generates the lofi backing track. |
-| **Venice AI — audio** | VoiceActor narrates lines. |
-| **Venice AI — video** | MotionAnimator generates clips; Editor stitches the final cut. |
-| **Venice AI — crypto RPC** | Conductor uses Venice's crypto RPC for chain reads (block numbers, balance checks, gas estimates) instead of a separate provider — Venice as the unified intelligence + infra layer. |
-
-That table is the slide we put up at second 10 of the demo. It's the entire scoring rubric mapped to features.
-
-### 3.10 AI architecture
-
-- **Decomposition LLM** — Venice text model with structured JSON output, prompted with the brief + the registry of available specialist roles. Returns a Job DAG (nodes = jobs, edges = data deps).
-- **Specialists** — each is a thin wrapper: input contract (zod schema) + Venice call + output checkpoint to IPFS. Specialists are stateless; the orchestrator handles retries and budget caveats.
-- **Quote model** — each specialist exposes `GET /quote?spec={...}` returning a USDC price. Quote is a function of estimated Venice tokens × Venice unit price × margin. The Conductor compares quotes when multiple specialists exist for a role.
-- **Quality gate** — the Editor agent uses Venice text to score intermediate artifacts; below a threshold, it re-hires a different specialist (real replaceability moment).
-
-### 3.11 Smart contract architecture
-
-We **do not** write new core contracts. We deploy:
-
-1. **`BrigadeRegistry.sol`** — agent role → set of qualified smart account addresses. Permissionless registration with a small staking deposit (anti-spam).
-2. **`BrigadeFacilitator.sol`** — a minimal x402-style facilitator that the Conductor uses to verify payment proofs and emit `JobPaid` events.
-3. (Post-MVP) **`ReputationAttester.sol`** — emits attestations after successful jobs (could route to EAS).
-
-All delegation logic, caveat enforcement, and execution come from the **MetaMask Delegation Framework** contracts — we are integrators of their stack, not reinventors.
-
-### 3.12 Agent architecture
-
-Each specialist agent is a tiny Node service:
-
-```
-specialist/<role>/
-├── server.ts          # express + 402 middleware
-├── quote.ts           # price model
-├── run.ts             # the actual Venice call
-├── checkpoint.ts      # IPFS pin
-└── caveats.ts         # what redelegation it expects
-```
-
-Specialists are **process-isolated** so they can in principle run on different boxes, owned by different operators. The Conductor only sees their HTTP interface and their smart account address. That is the entire trust boundary.
-
-### 3.13 UX architecture (what the user actually sees)
-
-- **Step 0 (first-run only):** "Upgrade your wallet to supervise agents." One tap → ERC-7702 upgrade via 1Shot. Toast: "You upgraded without paying gas. We paid in USDC behind the scenes."
-- **Step 1:** Budget slider ($1 – $50). Default $5. Time-to-live picker.
-- **Step 2:** Brief textarea + 6 starter prompts.
-- **Step 3:** "Hire Brigade" button. On click, the screen transforms into the **Swarm View**.
-- **Swarm View:** central conductor node, specialists fanning out as they are hired, animated coins moving along edges as x402 payments fire, live USDC counter, ETA bar.
-- **Step 4:** Result panel — video player, transcript, "regenerate the Composer's contribution for $0.14" button (re-run a single node).
-- **Step 5:** Receipt — spent, refunded, links to every onchain tx (via 1Shot dashboard / Etherscan), download artifacts.
-
-### 3.14 Go-to-market
-
-- **Day-1 wedge:** crypto-native creators on Farcaster / X who need short-form video. We post a public Brigade frame on Farcaster: cast a brief, get a video back, all for sub-$1.
-- **Distribution flywheel:** every artifact is watermarked with a "Made with Brigade in 47s for $0.42" attribution that links to the public swarm view for that job. Each output is a recruiting poster.
-- **Open the registry:** specialists are permissionless. We seed 10 reference implementations on Day 1 and let people deploy competing ones.
-- **Templates:** marketing-video brigade, podcast-episode brigade, course-module brigade, NFT-drop brigade. Each is a Conductor preset.
-
-### 3.15 Viral loop
-
-```
-User runs Brigade → gets shareable artifact → artifact has Brigade watermark
-                                                    │
-        ┌───────────────────────────────────────────┘
-        ▼
-Viewer clicks watermark → lands on public swarm view of that exact job
-                                                    │
-                                                    ▼
-                                  "Wait, agents paid each other onchain?"
-                                                    │
-                                                    ▼
-                                        Clones a template, runs their own
-```
-
-### 3.16 Moat
-
-- **Network effects** in the specialist registry (more specialists → cheaper quotes → more conductors → more specialists).
-- **Reputation graph** is hard to fake and accumulates with usage.
-- **Standardized job specs** (the role interfaces) become a de-facto standard once a few thousand jobs run through them.
-- **Brand association** with being the first credible x402+7710 facilitator gives us inbound from every team that comes later wanting to plug in.
-
-### 3.17 Future expansion
-
-- **Non-creative brigades:** research brigade, due-diligence brigade, e-commerce procurement brigade, "find me a flight" brigade.
-- **Human-in-the-loop nodes:** a specialist role that escalates to a Fiverr-style human via the same x402 rail.
-- **Agent yield:** specialists post a stake in the registry; bad output → stake slashing → real reputational risk.
-- **Cross-chain brigades:** specialists can live on different chains and settle via x402 across them.
-- **SDK:** publish `@brigade/conductor` and `@brigade/specialist` so any developer can build a new brigade in 50 lines.
-
-### 3.18 Why this has venture-scale potential
-
-The agent economy is going to need a payment substrate. Whoever ships the first reference implementation that *actually runs in production* on day-one rails (MetaMask + 1Shot + x402) becomes the schelling point. Brigade is sized so the hackathon MVP is also the founding artifact of the company.
-
-### 3.19 Why judges will remember this
-
-Judges sit through 50+ demos. They will remember the one where:
-- a video of a samurai cat plays at the end,
-- the swarm graph animated like a sci-fi movie,
-- the receipt showed real refunds from real revocations,
-- and one slide cleanly mapped every sponsor primitive to a feature.
-
-That is the project that wins.
+1. **Scope is enforceable onchain.** `maxSpend`, `expiresAt`, `allowedCallees` are caveats checked by the Delegation Framework. The agent literally **cannot** overspend.
+2. **Refusal is a first-class feature.** Anomaly catch is not a warning email — it's an onchain non-payment with a Venice-generated justification.
+3. **Reasoning is auditable.** Every decision the agent makes is logged with the Venice prompt + the structured output. You can read why it paid or didn't.
+4. **Revocation is one tap.** A real onchain revoke tx, relayed by 1Shot. Receipt visible on Etherscan.
+5. **Output is multimodal.** The weekly digest is a thing you'd actually open — text reasoning, a generated chart image, and a voice-narrated summary you can play in the kitchen.
 
 ---
 
-## 4. Build Strategy (realistic MVP)
+## 4. The Three "Demo-Killer" Upgrades
 
-### 4.1 Scope discipline
+These are the three details that turn DeleGate.AI from "competent" to "winner". Every one of them is included in the MVP.
 
-| Must ship | Cut for MVP | Mockable for demo |
+### Upgrade 1 — Multi-service intelligence (the *agency* moment)
+
+The agent does not pay a single thing. It manages a **portfolio of authorized services**:
+
+- Netflix-mock (monthly)
+- Spotify-mock (monthly)
+- Substack-mock (annual)
+- Domain renewal-mock (annual)
+- ChatGPT Plus-mock (monthly)
+
+At the end of each week, a **Venice text** agent runs a structured review:
+
+> "Spotify-mock has had zero usage signals in the last 3 weeks. Recommend cancellation, saving $9.99/month. Confidence: 0.86. Awaiting one-tap approval."
+
+This is **agent agency**, not a cron job. Judges feel the difference instantly.
+
+### Upgrade 2 — Anomaly catch (the *holy-shit* moment)
+
+A hardcoded demo scenario: Netflix-mock suddenly quotes **$500** instead of its normal $15.99. The agent:
+
+1. Receives the `402` quote.
+2. Compares against historical pricing in Postgres.
+3. Sends quote + history to Venice text with a refusal-prompt template.
+4. Refuses to pay. Emits an `AnomalyRefused` event onchain.
+5. Pushes a notification: "I refused to pay Netflix-mock $500 (32× normal). Reason: pricing anomaly. Approve override?"
+
+On stage, you trigger the bad quote with one button. The agent's refusal happens **live**, in **5 seconds**. That moment alone is worth a first-place vote.
+
+### Upgrade 3 — Multimodal weekly digest (the *Venice scoring multiplier*)
+
+Every Friday at 18:00, the agent generates a **Friday Brief**:
+
+| Modality | Venice endpoint | What it produces |
 |---|---|---|
-| 7702 upgrade through 1Shot, real mainnet (testnet if mainnet not feasible) | Reputation attestations | Specialist quotes can be deterministic (no live pricing model) |
-| User → Conductor 7710 delegation with caveats | Multi-conductor competition | The "Sub-editor" 3rd-hop redelegation can be demonstrated on a fake job for the depth requirement |
-| Conductor → Specialist redelegation, 2 levels minimum | Cross-chain | Venice video can be pre-warmed (rendered ahead of time and replayed via x402) to keep demo under 60s |
-| At least 4 specialists, each hitting a different Venice endpoint | Stake slashing | Agent registration UI |
-| x402 payment between Conductor and every Specialist | Templates marketplace | Final-quality re-hire flow can be triggered with a dummy specialist |
-| 1Shot relayer for every onchain tx, gas in USDC | Human-in-the-loop nodes | |
-| 1Shot webhooks as state source | Onchain reputation graph | |
-| Swarm visualization (live) | Frame-by-frame editor in UI | |
-| Receipt screen with refund line | Mobile responsive | |
-| Demo video ≤ 3 min | | |
+| Text | `text/completions` | The weekly summary — what was paid, what was refused, what to cancel |
+| Image | `image/generate` | A stylized spending chart for the week (no Chart.js required) |
+| Audio | `audio/speech` | A 60-second narrated version you can play hands-free |
 
-### 4.2 Tech stack
+This single feature unlocks **three Venice endpoints** for the scoring bonus. The judge sees: "this team is treating Venice like the multimodal brain it is, not a chat completion."
 
-- **Frontend:** Next.js 14 (App Router), wagmi v2 + viem, MetaMask Embedded Wallet via Dynamic SDK (lets us also support MetaMask extension users), React Flow for the swarm, Framer Motion for the animated edges, shadcn/ui.
-- **Backend (Conductor + Specialists):** Node 20, tRPC, zod, BullMQ for the job DAG runner, Postgres for the registry mirror, Redis for caches.
-- **Storage:** IPFS via web3.storage for artifacts; Postgres for metadata.
-- **Onchain:** Sepolia for build, mainnet (or whichever 1Shot supports) for the recorded demo. MetaMask Delegation Framework, BrigadeRegistry + BrigadeFacilitator as the only custom contracts.
-- **AI:** Venice OpenAI-compatible endpoint for text, plus per-modality endpoints for image/music/audio/video.
-- **Infra:** one Railway project. No Kubernetes. No Docker compose theatre.
+---
 
-### 4.3 Timeline (10-day plan; compress if shorter)
+## 5. User Journey (end-to-end)
+
+```
+[User opens DeleGate.AI, signs in with MetaMask Embedded Wallet (EOA)]
+        │
+        ▼
+[App detects: not yet a smart account]
+[One tap: "Activate DeleGate"]
+   → ERC-7702 authorization signed
+   → 1Shot Permissionless Relayer broadcasts the upgrade
+   → Webhook fires "AccountUpgraded"
+   → UI toast: "You upgraded your account without paying gas. 1Shot covered it in USDC."
+        │
+        ▼
+[Budget setup wizard]
+   - Weekly cap: $50 USDC (slider)
+   - Expiry: 7 days (renewable)
+   - Allowed callees: [Netflix-mock, Spotify-mock, Substack-mock, …]
+        │
+        ▼
+[User signs ONE ERC-7715 advanced permission grant]
+   caveats:
+     - maxSpend       = $50/week
+     - expiresAt      = now + 7d
+     - allowedCallees = [registered services]
+     - perCallCap     = $30
+        │
+        ▼
+[Agent activates. Onchain delegation visible on Etherscan.]
+        │
+        ▼
+─── Daily loop (autonomous) ────────────────────────────────────────
+[For each due invoice]
+   1. HTTP GET service /quote → returns 402 + quote
+   2. Venice text reasons: "is this expected? within budget? unusual?"
+   3. If anomaly → refuse, emit AnomalyRefused, notify user
+   4. If approved → 1Shot relays payment via redelegation, gas in USDC
+   5. Webhook updates UI in real time
+────────────────────────────────────────────────────────────────────
+        │
+        ▼
+─── Friday Brief (weekly) ───────────────────────────────────────────
+   Venice text  → weekly reasoning + cancellation suggestions
+   Venice image → spending chart for the week
+   Venice audio → 60s narration
+   Delivered to UI + downloadable
+────────────────────────────────────────────────────────────────────
+        │
+        ▼
+[User can revoke ANY time → 1-tap onchain revoke via 1Shot]
+[Unspent budget returns automatically; expiry auto-revokes if untouched]
+```
+
+---
+
+## 6. Technical Architecture
+
+```
+┌─────────────────────────────── FRONTEND ──────────────────────────────┐
+│ Next.js 14 (App Router) · wagmi v2 · viem                             │
+│ MetaMask Embedded Wallet (Dynamic SDK signer)                         │
+│ TailwindCSS + shadcn/ui · Framer Motion · Recharts (read-side only)   │
+└───────────────────────────────┬───────────────────────────────────────┘
+                                │ tRPC + Server-Sent Events
+┌───────────────────────────────▼───────────────────────────────────────┐
+│                       CONTROL PLANE (Node 20)                        │
+│ - Agent loop (BullMQ scheduled jobs, daily + weekly)                  │
+│ - Venice client (text · image · audio)                                │
+│ - x402 facilitator middleware                                         │
+│ - 1Shot webhook receiver                                              │
+│ - Anomaly detector (rule engine + Venice refusal prompt)              │
+│ - Postgres (services, invoices, decisions, digests)                   │
+└─────────────┬─────────────────────────────────────┬───────────────────┘
+              │                                     │
+   ┌──────────▼───────────────┐         ┌───────────▼──────────────┐
+   │ MetaMask Smart Accounts  │         │ 1Shot Permissionless     │
+   │ Kit (SDK)                │         │ Relayer (mainnet)        │
+   │ - signer agnostic        │         │ - 7702 upgrade           │
+   │ - DelegationManager      │         │ - 7710 broadcast         │
+   │ - 7715 caveat builder    │         │ - gas in USDC            │
+   │ - one-tap revoke         │         │ - webhooks (tx state)    │
+   └──────────────────────────┘         └──────────────────────────┘
+              │                                     │
+              └──────────────────┬──────────────────┘
+                                 │
+                  ┌──────────────▼───────────────┐
+                  │   MERCHANT-MOCK SERVICES     │
+                  │ (x402-compliant endpoints)   │
+                  │                              │
+                  │ /netflix-mock                │
+                  │ /spotify-mock                │
+                  │ /substack-mock               │
+                  │ /domain-mock                 │
+                  │ /chatgpt-mock                │
+                  │                              │
+                  │ each: GET /quote → 402       │
+                  │       POST /charge + proof   │
+                  └──────────────────────────────┘
+                                 │
+                  ┌──────────────▼───────────────┐
+                  │        VENICE AI API         │
+                  │ text · image · audio         │
+                  │ + crypto RPC for chain reads │
+                  └──────────────────────────────┘
+```
+
+---
+
+## 7. Sponsor primitive mapping (audit table)
+
+The single slide we show the judges at second 30 of the demo.
+
+| Sponsor primitive | Where it lives in DeleGate.AI |
+|---|---|
+| **MetaMask Smart Accounts** | The user's EOA is upgraded to a Smart Account via ERC-7702 on first run. |
+| **MetaMask ERC-7715 Advanced Permissions** | The "Activate DeleGate" flow is a single 7715 prompt with `maxSpend`, `expiresAt`, `allowedCallees`, `perCallCap` caveats. |
+| **MetaMask ERC-7710 Delegation** | The agent's daily payment flow re-derives a per-invoice redelegation from the 7715 grant. |
+| **1Shot Permissionless Relayer** | Every onchain tx — 7702 upgrade, 7715 grant, every payment, every revoke, every anomaly event — is broadcast via 1Shot. Gas paid in USDC. |
+| **1Shot webhooks** | `TransactionSubmitted` / `TransactionConfirmed` events drive the real-time UI state. No polling. |
+| **x402 + ERC-7710 facilitator** | The DeleGate.AI control plane **is** an x402↔7710 facilitator. We open-source the module in `packages/facilitator`. |
+| **Venice text** | Daily payment reasoning + weekly digest + anomaly refusal justifications. |
+| **Venice image** | Friday Brief spending chart generation. |
+| **Venice audio** | Friday Brief 60s TTS narration. |
+| **Venice crypto RPC** | All chain reads (balances, gas estimates, block numbers) routed through Venice's crypto RPC. |
+
+---
+
+## 8. AI Architecture
+
+### 8.1 The reasoning loop (daily)
+
+```
+for invoice in due_invoices:
+    quote = http_get(invoice.service + "/quote")          # returns 402 + price
+    context = {
+        invoice,
+        quote,
+        history = postgres.priceHistory(invoice.service),
+        remainingBudget,
+        recentRefusals,
+    }
+    decision = venice.text.chat({
+        model: "venice-default",
+        messages: [
+            SYSTEM_PROMPT,                                 # see § 8.2
+            { role: "user", content: JSON.stringify(context) },
+        ],
+        response_format: { type: "json_schema", schema: DECISION_SCHEMA },
+    })
+    if decision.action == "PAY":
+        oneshot.relay(redelegate(quote.amount, invoice.service))
+    elif decision.action == "REFUSE":
+        emit AnomalyRefused(decision.reason)
+        notify(user, decision)
+    elif decision.action == "ESCALATE":
+        notify(user, decision)                             # waits for human
+```
+
+### 8.2 The Venice system prompt (excerpt)
+
+```
+You are DeleGate.AI, a chief-of-staff agent for onchain money.
+You manage a delegated USDC budget on a MetaMask Smart Account.
+For each invoice, decide: PAY | REFUSE | ESCALATE.
+REFUSE if:
+  - quoted price > 1.5× rolling-median of last 6 invoices for this service
+  - service is not in allowedCallees
+  - per-call cap would be exceeded
+  - weekly budget would be exceeded
+PAY only if all caveats and rules are satisfied.
+ESCALATE if confidence < 0.7 or signals are mixed.
+Always return: { action, amount, reason, confidence }.
+```
+
+### 8.3 The Friday Brief composer
+
+```
+weekly_text  = venice.text.chat(weekly_review_prompt(week_data))
+chart_image  = venice.image.generate(prompt_from(week_data), size="1024x576")
+audio_clip   = venice.audio.tts(weekly_text.summary, voice="warm-en")
+deliver({ weekly_text, chart_image, audio_clip })
+```
+
+Three endpoints, one report. Clean.
+
+---
+
+## 9. Smart Contract Architecture
+
+We **do not** rewrite core primitives. The MetaMask Delegation Framework does the heavy lifting. We deploy two minimal contracts:
+
+| Contract | Purpose | LOC |
+|---|---|---|
+| `DelegateRegistry.sol` | Map service-id → trusted callee address (anti-spoof for the agent) | ~80 |
+| `DelegateFacilitator.sol` | Verify x402 payment proofs, emit `Paid` / `AnomalyRefused` events for the UI | ~120 |
+
+That's the entire onchain footprint we own. Everything else flows through the Delegation Framework + 1Shot.
+
+---
+
+## 10. UX Architecture (what the user actually sees)
+
+| Step | Screen | Key element |
+|---|---|---|
+| 0 | First-run upgrade | "Activate DeleGate" big primary button. Etherscan link after upgrade. |
+| 1 | Budget wizard | Weekly cap slider, expiry picker, per-call cap, callee list with toggles. |
+| 2 | Service connect | Add Netflix-mock, Spotify-mock, etc. Each shown with status chip. |
+| 3 | Dashboard | Live "Agent active" indicator, remaining budget gauge, next-invoice ETA, decision log feed. |
+| 4 | Decision detail | Click any decision → see Venice prompt, structured output, tx link. |
+| 5 | Anomaly alert | Red banner, "I refused $500 quote", one-tap "Approve override" or "Revoke service". |
+| 6 | Friday Brief | Text + generated chart image + audio player. Downloadable. |
+| 7 | Revoke | Big red button. Confirms with caveats. Onchain tx, Etherscan link. |
+
+---
+
+## 11. Go-to-market
+
+- **Day-1 wedge:** crypto-native creators paying for $80-$200/mo of AI subs. Tweet a screen-cap of the Friday Brief.
+- **Distribution flywheel:** Friday Brief audio clips get shared (they're short, narrated, and shareable). Each one watermarked "Compiled by DeleGate.AI".
+- **Open the merchant SDK:** publish `@delegate/x402-merchant` so anyone can list their service in the registry. Lock-in for the next wave of x402 sellers.
+- **Templates:** "Solo founder stack", "Crypto researcher stack", "Designer stack". One click, pre-configured callees.
+
+---
+
+## 12. Moat
+
+- **Decision-log lock-in:** the longer the agent has run for a user, the better its anomaly baseline. Switching costs grow with usage.
+- **Merchant registry:** as the canonical x402 service directory, we sit on the demand side of every new x402 merchant.
+- **First credible consumer brand** in the agent-payments substrate.
+
+---
+
+## 13. Future expansion (the v2 vision)
+
+DeleGate.AI is the **atomic unit**. The natural extensions:
+
+- **Multi-agent**: per-domain agents (a "subs" agent, a "freelancer-payments" agent, a "treasury" agent), each with its own scoped delegation.
+- **Redelegation to specialists**: the natural path to **BRIGADE** (see Appendix A). A subs agent that calls a research agent that calls a designer agent — all on the same payment substrate.
+- **Onchain reputation**: every refusal and every successful payment is an attestation. Build a reputation graph for both agents and merchants.
+- **Cross-chain**: the merchant lives on chain A, the budget lives on chain B; x402 routes the settlement.
+
+---
+
+## 14. Why this submission wins
+
+| Reason | Evidence |
+|---|---|
+| Hits multiple tracks cleanly | Best Agent ✅ · Best x402 + ERC-7710 ✅ · Venice bonus ✅ · 1Shot bonus ✅ |
+| Demoable in 3 minutes | Brief is one screen; anomaly catch is one click; Friday Brief plays inline. |
+| Every primitive is load-bearing | The audit table in §7 shows zero decoration. |
+| Live moments judges will remember | Anomaly refusal at 5 seconds; voice-narrated brief; one-tap revoke. |
+| Honest scope, shippable in 7 days | Single-agent, single-user. No swarm, no video model. Risk profile suited to demo day. |
+
+---
+
+## 15. Build Strategy (realistic 7-day MVP)
+
+### 15.1 Scope discipline
+
+| Must ship (real, onchain) | Mockable for demo | Cut for MVP |
+|---|---|---|
+| 7702 upgrade via 1Shot | Service endpoints (Netflix-mock etc.) | Real Netflix/Spotify integration |
+| 7715 advanced permission grant | Anomaly scenario trigger button | Reputation contracts |
+| ERC-7710 redelegation per payment | Pricing history seed data | Multi-agent fanout |
+| x402 payment flow with proof verification | | Cross-chain |
+| Venice text / image / audio in main flow | | Mobile app |
+| 1Shot webhooks → live UI | | Merchant onboarding portal |
+| One-tap revoke (real onchain tx) | | Reputation attestations |
+| Friday Brief (full multimodal) | | Templates marketplace |
+| Anomaly catch with onchain event | | |
+| Decision log with Venice prompt inspection | | |
+
+### 15.2 Tech stack
+
+- **Frontend:** Next.js 14, wagmi v2 + viem, Dynamic SDK (MetaMask Embedded Wallet signer), TailwindCSS, shadcn/ui, Framer Motion.
+- **Backend:** Node 20, tRPC, zod, BullMQ for scheduled jobs, Postgres, Redis.
+- **Onchain:** Sepolia for build; mainnet (or whichever chain 1Shot supports) for the recorded demo.
+- **AI:** Venice OpenAI-compatible client for text + image + audio.
+- **Infra:** single Railway project. No Kubernetes.
+
+### 15.3 Timeline
 
 | Day | Goal | Definition of done |
 |---|---|---|
-| 1 | Scaffolding: repo, Next.js shell, wagmi connect, env, 1Shot SDK wired | "Hello, smart account" works |
-| 2 | 7702 upgrade flow through 1Shot, end-to-end | First user upgrade tx confirmed on Sepolia |
-| 3 | User → Conductor 7710 delegation with caveat builder | Delegation visible on Etherscan |
-| 4 | Specialist scaffold + 402 middleware + Venice text/image endpoints | `curl /quote` returns 402, `curl /run` with proof returns image |
-| 5 | Conductor → Specialist redelegation + x402 facilitator logic | Specialist runs and gets paid; refund path works |
-| 6 | Add music + audio + video specialists; wire Job DAG planner | End-to-end "make a video" works headlessly |
-| 7 | Swarm visualization frontend; webhook → live UI | Watching the swarm is fun |
-| 8 | 3rd-hop redelegation demo (Editor → Sub-editor); revocation visualization; receipt screen | Demo path is complete |
-| 9 | Polish, retries, edge cases, error toasts, copy pass | Cold-start demo works on the first try, repeatable |
-| 10 | Record demo, write submission post, social posts (5 of them for the social bonus), submit | Submitted with 8h buffer |
+| 1 | Scaffolding: monorepo, Next.js shell, 1Shot SDK, Venice client, env wiring | "Hello Smart Account" works |
+| 2 | 7702 upgrade flow end-to-end | First upgrade tx confirmed on Sepolia, visible in UI |
+| 3 | 7715 grant + caveat builder + ERC-7710 redelegation per payment | First mock payment relayed via 1Shot |
+| 4 | Merchant-mock services (5 endpoints), x402 facilitator middleware | `curl /quote` returns 402; `POST /charge` accepts proof |
+| 5 | Daily reasoning loop + Venice text decisions + decision log | Cron tick processes due invoices, decisions persisted |
+| 6 | Anomaly catch (rule engine + Venice refusal prompt) + onchain event | Demo button triggers $500 quote → live refusal in 5s |
+| 7 | Friday Brief composer (text + image + audio); UI polish; one-tap revoke; receipt screen | Full demo loop runs cold start to cold start |
+| 8 | Buffer day: edge cases, error toasts, retry logic, demo rehearsal | Cold demo works first try, twice in a row |
+| 9 | Record demo video; write submission post; post 5 social updates tagging @MetaMaskDev | Submitted with 12h buffer |
 
-### 4.4 What gets faked, and how honestly
+### 15.4 What is real and what is staged
 
-- **Specialist quotes** are computed by a deterministic formula in MVP, not a live pricing model. We're upfront about this in the demo (no fraud, just scope).
-- **Reputation** is shown as a static "★★★★★" placeholder in the registry. We say "reputation contracts ship post-hackathon."
-- **Venice video** is the slowest endpoint. We pre-warm the Composer + Motion calls 90 seconds before the live demo so the demo finishes in 45 seconds on stage. We disclose this in the demo as "background pre-render" — it's industry-standard for live AI demos and judges respect honesty over staging.
-- **Mainnet gas** — if 1Shot mainnet has friction during the build, we record the demo on whichever mainnet 1Shot supports and submit a Sepolia fallback alongside.
+**Real on stage:**
+- 7702 upgrade tx, observable on Etherscan
+- 7715 grant with all caveats, inspectable
+- Live anomaly refusal, with the Venice prompt + structured output shown
+- Real x402 payment flow with redelegation
+- Real one-tap revoke tx
 
-### 4.5 What is real and must work live
+**Disclosed-as-staged on stage:**
+- Merchant services are mocks (no Netflix integration exists for x402). The mocks fully implement the x402 spec.
+- The anomaly scenario is triggered by a demo button (so the reviewer can see it); the rule engine is real.
 
-- The 7702 upgrade tx (real, onchain).
-- The user → Conductor delegation (real, onchain, with real caveats verifiable on Etherscan).
-- The Conductor → Specialist redelegation (real, 2+ hops, with real caveats).
-- One round-trip x402 payment captured live on stage (even if other rounds are pre-played).
-- The revocation tx at the end (real, observable on Etherscan).
-
-These are the things a judge will click into. Everything they can click must be real.
+We tell the judge both of these. Honesty over theater.
 
 ---
 
-## 5. Demo Script
-
-### 5.1 Constraints
-
-- Length: 2:45 (hard ceiling 3:00).
-- Camera: screencap + small face cam.
-- Energy: matter-of-fact, not hype-bro.
-- One narrative arc: setup → moment of awe → mechanics → mic drop.
-
-### 5.2 Script
+## 16. Demo Script (2:45 hard ceiling)
 
 > **[0:00 — 0:10] Cold open**
-> *Camera on app. Empty brief field.*
-> "I want to make a 45-second lofi music video. Right now. About a samurai cat fighting the banking system. I have never opened a video editor in my life."
+> *Camera on app. Empty dashboard.*
+> "I'm going to give an AI agent $50 a week to manage my subscriptions. I'm also going to make it refuse to pay anything weird. Here's how."
 >
-> **[0:10 — 0:20] One-click setup**
-> "Brigade upgraded my MetaMask wallet to a smart account. I never paid gas — 1Shot's relayer paid it in USDC. I gave a Conductor agent a $5 budget for the next hour, and only to spend on Brigade's registry."
-> *Screen shows the 7702 upgrade tx confirmed and the delegation with caveats.*
+> **[0:10 — 0:30] Setup**
+> *Click "Activate DeleGate".*
+> "DeleGate just upgraded my MetaMask wallet to a Smart Account with ERC-7702. I never touched ETH — 1Shot's relayer paid the gas in USDC."
+> *Click Etherscan link on upgrade tx.*
+> *Open budget wizard, set $50 cap, 7 days, 5 services.*
+> "One 7715 prompt. Hard cap $50. Expires in 7 days. Per-call cap $30. Only these five services. I sign once."
 >
-> **[0:20 — 0:30] Hire**
-> "I hit Hire Brigade."
-> *Swarm view explodes into life. Six specialist nodes spawn around the Conductor.*
+> **[0:30 — 0:50] Daily flow**
+> *Click "Run today's invoices".*
+> "Watch the agent process today's invoices. Each one is an x402 quote. The agent reasons with Venice, checks pricing history, and either pays via redelegation or refuses."
+> *Decision log fills in with green checkmarks and reasoning expandable.*
 >
-> **[0:30 — 1:30] The brigade works**
-> *Voiceover while the swarm graph animates:*
-> "Conductor decomposed the brief with Venice text. It hired a Scriptwriter, a Storyboard artist using Venice image, a Composer using Venice music, a Voice Actor using Venice audio, a Motion animator using Venice video, and an Editor. Every one of these is a real smart account. The Conductor redelegated a slice of my budget to each one — every redelegation has its own cap, its own expiry, its own allowed callees."
-> *Pause for swarm to finish. Tokens animate down each edge as x402 payments fire.*
-> "Watch the Editor agent here. It looked at the Storyboard artist's first pass, decided the quality was too low, and hired a different storyboard specialist for the same job. That's not a feature I had to write. That's what happens when agents are addresses, not function calls."
+> **[0:50 — 1:20] Anomaly catch — the holy-shit moment**
+> *Click "Inject anomaly".*
+> "Now Netflix-mock just quoted me $500 instead of $15.99."
+> *Five seconds. Red banner pops up:*
+> "Refused. Reason: 32× the rolling median. The agent emitted an onchain `AnomalyRefused` event. Here it is on Etherscan."
+> *Click into the event.*
 >
-> **[1:30 — 1:50] The artifact**
-> *Final video plays. Lofi beat, samurai cat, banking system, the whole thing.*
-> "Total cost: $4.18 out of my $5 budget. The other $0.82? The Conductor just revoked the unused delegations and the budget came back to me. That revocation is a real tx — here it is on Etherscan."
-> *Click into the revocation tx.*
+> **[1:20 — 2:00] Friday Brief — Venice multimodal**
+> *Click "Generate Friday Brief".*
+> "Now the agent compiles my week. Three Venice endpoints in one report."
+> *Text appears. Then a generated chart image. Then audio plays.*
+> *Audio plays in real volume:* "This week, DeleGate paid $34.97 across four services and refused one $500 anomaly. I recommend cancelling Spotify-mock — zero usage in three weeks."
 >
-> **[1:50 — 2:30] The architecture slide**
-> *Single slide: the table from §3.9.*
-> "Every primitive in this hackathon is doing real work. The user account is a MetaMask smart account, upgraded via 7702. The budget is a 7715 advanced permission grant. The handoffs are 7710 redelegations with caveats. The payment between agents is x402. The brain of every agent is Venice — five endpoints, not one. And every onchain transaction was relayed by 1Shot in USDC."
+> **[2:00 — 2:30] Architecture slide**
+> *Single slide: the §7 audit table.*
+> "Every sponsor primitive does real work. Smart Account upgraded via 7702. Budget granted via 7715. Per-payment delegations via 7710. Payments are x402 with onchain proof. Three Venice endpoints in the main flow. Every transaction relayed by 1Shot in USDC. Webhooks drive the live UI."
 >
 > **[2:30 — 2:45] Mic drop**
-> "The Conductor isn't ours. It's an open spec. Anyone can deploy a competing Conductor. Anyone can deploy a specialist for any role. We just shipped the first product where AI agents have wallets, pay each other, and refund what they don't use. That's not an AI demo. That's a payments substrate."
+> *Click big red Revoke button.*
+> "And if I change my mind, one tap, one onchain tx, my agent's authority is dead. That's not an AI demo. That's what agentic finance was supposed to feel like."
 >
-> *End card: BRIGADE — agents that earn, spend, and account.*
-
-### 5.3 Pitch flex moments to hit
-
-- The 7702 upgrade tx must be **clicked through to Etherscan** on screen.
-- The "Editor re-hires Storyboard" moment must be **called out by voice**; it's the proof of replaceability.
-- The revocation tx must be **shown post-job**; it's the proof of refund.
-- The slide must be **visible for ≥ 10 seconds**; judges screenshot it.
+> *End card: DeleGate.AI — bounded, revocable, multimodal.*
 
 ---
 
-## 6. Judge-Level Critique (and the fixes we already shipped)
+## 17. Judge-Level Critique (and the fixes already shipped)
 
-I now put on the judge's hat and try to kill this idea.
+### 17.1 Weaknesses & mitigations
 
-### 6.1 Weaknesses
-
-| Weakness | Severity | Mitigation we baked in |
+| Weakness | Severity | Mitigation baked into the build |
 |---|---|---|
-| **Demo failure risk:** live AI media generation is slow and flaky. | High | Pre-warm the heavy Venice endpoints; record a recovery clip; have a deterministic fallback brief that always works. Be honest in script that "background pre-render" is industry standard. |
-| **Hand-wavy decomposition:** judges may suspect the Job DAG is hardcoded. | High | Show the raw Venice output of the planner on a "Behind the scenes" toggle. Different briefs produce visibly different DAGs in the demo. |
-| **Redelegation depth:** judges may say 2 hops isn't really A2A. | Medium | Force a 3rd-hop scenario in the demo (Editor → Sub-editor) and call it out explicitly. |
-| **7702 upgrade may be flaky on the day:** dependency on 1Shot mainnet. | Medium | Record the upgrade flow ahead of time as a "first-time user" clip; the live demo can reuse an already-upgraded account. Disclose this in the README. |
-| **x402 between in-house agents may look fake:** all specialists are written by us. | Medium | The wallets are distinct, the contracts are real, the txs are public. Frame it as "v0 brigade with reference specialists; permissionless registration ships in v0.1." |
-| **Scope inflation:** 6 specialists is a lot for a hackathon. | Medium | The role contracts are uniform; once one specialist works, the others are 50 LOC each. Build them as a fleet, not as bespoke projects. |
-| **Security concern:** a malicious specialist could try to drain caveats. | High | Caveats explicitly limit `allowedCallees` per redelegation. We show a "naughty agent" demo (offline / appendix) that tries to overspend and gets reverted. |
-| **Venice video quality:** may not be hackathon-impressive. | Medium | Stylize: lofi/illustrated aesthetic where rough motion is a feature, not a bug. |
-| **"Just LangChain with wallets" critique:** judges may say it's a multi-agent framework with payments bolted on. | High | Reframing: it's a **payments substrate** where multi-agent is the proof. The slide at 2:00 hammers this. |
-| **Reputation is post-MVP:** judges may say "without reputation this is just an internal mock". | Medium | Pre-announce the EAS schema on submission day; ship the *schema* even if the issuer is stubbed. |
+| **"This is just a cron job with Venice on top"** | High | The decision log + Venice prompt inspector + anomaly refusal proves real reasoning. We *show* the Venice JSON output for every decision. |
+| **All merchants are mocks** | High | Disclose upfront. Frame as "x402 is new — the substrate works; we ship a reference merchant SDK so any service can list." |
+| **No A2A coordination** | Medium | We don't claim that track. We're optimizing for Best Agent + Venice + 1Shot. A2A is the BRIGADE v2 path. |
+| **Anomaly trigger is a button** | Medium | Honestly disclose. The rule engine is real; the button just injects the quote. |
+| **Venice image chart could look amateur** | Medium | Use a tuned art style (minimal, editorial) so it looks intentional, not glitchy. |
+| **1Shot mainnet flakiness on demo day** | Medium | Sepolia fallback recorded; submission notes link both videos. |
+| **7715 prompt UI lives in MetaMask extension — what if user is on Embedded Wallet?** | Medium | Embedded Wallet uses a programmatic equivalent. Dynamic SDK gives us both paths. |
+| **Friday Brief audio TTS quality** | Low | Venice TTS is solid; we pre-pick the voice profile and confirm in rehearsal. |
+| **"Not enough onchain depth"** | Medium | We surface the count: # of relayed txs, gas saved in USDC, # of redelegations issued, # of anomalies refused. Numbers on screen kill this critique. |
+| **Scope feels small vs BRIGADE** | Low | Reframe as discipline: "We shipped the atom. BRIGADE is the molecule." See Appendix A. |
 
-### 6.2 Iteration that strengthens the idea
+### 17.2 Why it can still lose, and what we'd do
 
-After the critique, three small details harden the demo:
-
-1. **One non-creative brigade preset** in the UI ("research brigade") to show the architecture generalizes beyond media. A button, not a full build.
-2. **A "naughty agent" appendix clip** showing a specialist attempting to exceed its caveat and getting reverted — proves the safety story.
-3. **A printed "facilitator spec" markdown** in the repo (`/spec/x402-7710-facilitator.md`) so a 1Shot judge can read the standard we're proposing. Makes us the obvious reference implementation, which is exactly what 1Shot's hint asked for.
-
-### 6.3 Why it can still lose (and what we'd do about it)
-
-- If a competing team ships a more polished single-modality demo (e.g., a slick onchain Spotify with Venice music + 7715 subscriptions), they may win **Best Agent** by being narrower and prettier. **Counter:** our cross-track stack is what gives us total prize value; even if we lose one track, we win two others. Brigade is built to **maximize EV across tracks**, not to dominate any single one.
-- If 1Shot mainnet has an outage on demo day. **Counter:** Sepolia fallback recorded; submission notes explain.
-- If a judge has "anti-AI-media" fatigue. **Counter:** the architecture slide pivots the story from "AI media" to "payment substrate" in 10 seconds.
+- A team ships a polished BRIGADE-style swarm and it works. **Counter:** our cross-track coverage still earns Venice + 1Shot + maybe second on Best Agent. EV is positive.
+- A team makes a viral consumer dApp that captures crypto twitter. **Counter:** post the Friday Brief audio with the watermark; create our own viral surface area.
+- Judges fatigue on "subscriptions". **Counter:** lead with the anomaly refusal in the cold open, not subscriptions.
 
 ---
 
-## 7. Track-by-track checklist
+## 18. Track-by-Track Submission Checklist
 
-A QA list we run before submission. Every box must be checked.
-
-**Best x402 + ERC-7710**
-- [ ] Smart accounts integrated via MetaMask Smart Accounts Kit
-- [ ] x402 calls executed via ERC-7710 delegations
-- [ ] Working integration shown in demo video main flow
-- [ ] 1Shot API usage shown in demo (gas relay, webhooks)
-
-**Best Agent**
-- [ ] Smart accounts integrated via MetaMask Smart Accounts Kit
-- [ ] Working integration shown in demo video main flow
+**Best Agent** ($3K track)
+- [ ] MetaMask Smart Accounts integrated in main flow
+- [ ] Working integration shown in demo video
 - [ ] 1Shot API usage shown in demo
+- [ ] Real autonomous reasoning loop (not a cron with hardcoded if-else)
 
-**Best A2A Coordination**
-- [ ] Uses redelegation (≥ 2 hops, ideally 3)
-- [ ] Working integration shown in demo video main flow
-- [ ] 1Shot API usage shown in demo
+**Best x402 + ERC-7710** ($3K track)
+- [ ] ERC-7710 delegations used for every payment
+- [ ] x402 payment flow with proof verification end-to-end
+- [ ] 1Shot relay shown in demo
 
-**Best Use of Venice AI (bonus)**
-- [ ] Qualifies for a main track (yes: all three)
-- [ ] Venice used as core part of application
-- [ ] Venice in main flow of demo video
-- [ ] Meaningful AI-powered output (a finished video)
-- [ ] Multi-endpoint usage (text + image + music + audio + video + crypto RPC)
+**Best Use of Venice AI** ($3K bonus)
+- [ ] Qualifies for a main track ✅ (Best Agent + Best x402)
+- [ ] Venice as core part of the application
+- [ ] Multiple Venice endpoints in main flow (text + image + audio)
+- [ ] Meaningful AI-powered output (the Friday Brief + reasoning + refusals)
 
-**Best Use of 1Shot Permissionless Relayer (bonus)**
-- [ ] Relays 7710 transactions through 1Shot Permissionless mainnet relayer
-- [ ] Uses 7702 authorizations to upgrade accounts via 1Shot
-- [ ] Webhooks used as state source
-- [ ] Acts as x402↔7710 facilitator (open-sourced spec)
+**Best Use of 1Shot Permissionless Relayer** ($1K bonus)
+- [ ] 7710 transactions relayed through 1Shot mainnet relayer
+- [ ] 7702 authorization to upgrade EOA → Smart Account via 1Shot
+- [ ] Webhooks used as source of truth for UI state
+- [ ] x402↔7710 facilitator module open-sourced
 
-**Best Social Media presence (bonus, $100 ×5)**
-- [ ] ≥ 5 posts tagging @MetaMaskDev with build journey
-- [ ] Posts showcase how Advanced Permissions improved UX
-- [ ] Quality and frequency consistent
+**Best Social Media Presence** ($100 ×5 bonus)
+- [ ] 5+ posts tagging @MetaMaskDev with build journey
+- [ ] Highlight how Advanced Permissions improved UX
+- [ ] Friday Brief shared as audio post (organic viral surface)
 
-**Best Feedback (bonus, $100 ×5)**
-- [ ] Submit specific, actionable feedback on docs/SDK/relayer DX after hackathon
+**Best Feedback** ($100 ×5 bonus)
+- [ ] Submit specific actionable feedback on docs/SDK/relayer DX after build
 
 ---
 
-## 8. Repository layout (the shape we'll build)
+## 19. Repository layout
 
 ```
-brigade/
+delegate-ai/
 ├── apps/
 │   ├── web/                       # Next.js frontend
-│   ├── conductor/                 # Conductor service
-│   └── specialists/
-│       ├── scriptwriter/
-│       ├── storyboard/
-│       ├── composer/
-│       ├── voice/
-│       ├── motion/
-│       └── editor/
+│   ├── agent/                     # Reasoning loop + Venice client + anomaly engine
+│   └── merchants/                 # Mock x402 merchant services
 ├── packages/
-│   ├── facilitator/               # x402 ↔ 7710 facilitator (the reusable bit)
-│   ├── caveats/                   # caveat builder helpers
-│   ├── registry-client/           # BrigadeRegistry typed client
+│   ├── facilitator/               # x402 ↔ 7710 facilitator (reusable)
+│   ├── caveats/                   # 7715/7710 caveat builders
+│   ├── venice-client/             # typed wrapper (text · image · audio)
+│   ├── oneshot-client/            # 1Shot relay + webhook helpers
 │   └── ui/                        # shared React components
 ├── contracts/
-│   ├── BrigadeRegistry.sol
-│   └── BrigadeFacilitator.sol
+│   ├── DelegateRegistry.sol
+│   └── DelegateFacilitator.sol
 ├── spec/
-│   └── x402-7710-facilitator.md   # the standard we propose
+│   └── x402-7710-facilitator.md   # the reference standard we publish
 ├── infra/
-│   └── 1shot-webhook-handler/
+│   └── webhooks/                  # 1Shot webhook receiver
 └── README.md
 ```
 
 ---
 
-## 9. Why this submission wins
+## 20. Why this submission wins (summary)
 
-1. **It hits every sponsor's hidden ask** — it is a flagship reference for MetaMask, 1Shot, and Venice all at once.
-2. **It maximizes prize EV** — built to qualify for 3 main tracks + 2 stackable bonuses.
-3. **The demo is visceral** — a video plays, a refund happens, a graph animates.
-4. **The architecture is honest** — every primitive is load-bearing; nothing is decoration.
-5. **The "holy shit" moment is real** — agents re-hire each other based on output quality, with no orchestration code from us.
-6. **The story is venture-scale** — this is the payments substrate of the agent economy, not a demo of one app.
-
-That is what a winning submission looks like.
+1. **Maximum risk-adjusted prize EV.** Four tracks targeted, all of them realistically reachable.
+2. **Every sponsor primitive is load-bearing.** No decoration, no hand-waving. The audit table in §7 is the proof.
+3. **Three demo-killer moments.** Multi-service agency, anomaly refusal, multimodal Friday Brief.
+4. **Shippable in 7 days, real on demo day.** No swarm-UI gymnastics, no Venice video flakiness, no 3-hop redelegation Russian roulette.
+5. **A consumer story judges actually feel.** Subscriptions + refusal + Friday Brief is something a non-crypto cousin would use.
 
 ---
 
+# Appendix A — BRIGADE (the v2 vision, post-hackathon)
+
+BRIGADE was the v1 finalist that lost the deliverability pass. It is preserved here because **DeleGate.AI's architecture is its atomic unit**: same caveats, same x402, same 1Shot, same Venice — just one agent instead of many.
+
+### A.1 What BRIGADE is
+
+A **Conductor agent** decomposes a creative brief, hires a **brigade of specialist sub-agents** (Scriptwriter, StoryboardArtist, Composer, VoiceActor, MotionAnimator, Editor) via **ERC-7710 redelegation**, and each sub-agent gets paid over **x402** for its piece. Final artifact (a music video, a podcast, a course module) is assembled and returned to the user. Unspent budget is auto-refunded by revocation.
+
+### A.2 Why DeleGate.AI → BRIGADE is the natural path
+
+| DeleGate.AI v1 | BRIGADE v2 |
+|---|---|
+| 1 user, 1 agent | 1 user, 1 Conductor, N specialists |
+| 7715 grant + per-payment 7710 | 7715 grant + Conductor 7710 + specialist redelegations |
+| Pays merchants over x402 | Specialists pay each other over x402 |
+| Venice as decision brain | Venice as decision brain *and* production brain (image, music, video) |
+| Single-flow demo | Swarm-graph demo |
+
+Same primitives. Higher composition. Build v1 first, ship v2 once the substrate is proven.
+
+### A.3 Why we didn't ship it now
+
+- 6 specialists × specialist service + Conductor orchestration + swarm visualization frontend = 3-4× the surface area.
+- Venice video is the slowest, flakiest Venice endpoint. Risk on stage too high.
+- Multi-hop redelegation depth (3 hops) requires deep MetaMask Delegation Framework familiarity.
+- A 7-day window with a small team forces a choice: ship one thing brilliantly, or ship three things shakily.
+
+DeleGate.AI is the former. BRIGADE will follow once the atomic unit is shipping in users' hands.
+
+---
+
+<div align="center">
+
+**DeleGate.AI** — bounded, revocable, multimodal.
+
 *Built for the MetaMask Smart Accounts Kit × 1Shot API × Venice AI Dev Cook Off.*
+
+</div>
