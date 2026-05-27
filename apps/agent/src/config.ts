@@ -37,6 +37,20 @@ const Schema = z.object({
   AGENT_TICK_SECONDS: z.coerce.number().int().positive().default(30),
   AGENT_PORT: z.coerce.number().int().positive().default(4030),
   AGENT_CORS_ORIGIN: z.string().default("*"),
+  /**
+   * "off"  — receipts are mock only (no onchain spend).
+   * "dust" — each PAY also fires a small onchain USDC transfer via 1Shot
+   *          (default 10000 micro = $0.01 USDC) so we get a real tx hash.
+   */
+  ONCHAIN_SETTLEMENT_MODE: z.enum(["off", "dust"]).default("off"),
+  /** Dust transfer amount in micro-USDC. Default 10000 = $0.01 USDC. */
+  ONCHAIN_DUST_MICRO_USDC: z.coerce.bigint().default(BigInt(10000)),
+  /** Recipient for onchain dust transfers. Defaults to the burn address. */
+  SETTLEMENT_RECIPIENT: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .default("0x000000000000000000000000000000000000dEaD"),
+  CHAIN_RPC_URL: z.string().url().default("https://mainnet.base.org"),
 });
 
 export const config = Schema.parse(process.env);

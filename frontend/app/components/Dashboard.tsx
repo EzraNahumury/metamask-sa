@@ -60,6 +60,9 @@ export default function Dashboard() {
       } else if (ev.type === "payment.succeeded") {
         const existing = decisionMap.current.get(ev.decisionId);
         if (existing) upsertDecision({ ...existing, receiptId: ev.receiptId });
+      } else if (ev.type === "payment.settled") {
+        const existing = decisionMap.current.get(ev.decisionId);
+        if (existing) upsertDecision({ ...existing, txHash: ev.txHash });
       }
     });
     return off;
@@ -264,9 +267,19 @@ function DecisionRow({ d }: { d: Decision }) {
         </span>
       </div>
       <div className="text-sm text-zinc-300">{d.reason}</div>
-      {d.receiptId ? (
-        <div className="text-[11px] text-zinc-500 font-mono">
-          receipt {d.receiptId}
+      {d.receiptId || d.txHash ? (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 font-mono">
+          {d.receiptId ? <span>receipt {d.receiptId.slice(0, 8)}…</span> : null}
+          {d.txHash ? (
+            <a
+              href={`https://basescan.org/tx/${d.txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:text-emerald-300 underline"
+            >
+              tx {d.txHash.slice(0, 10)}…
+            </a>
+          ) : null}
         </div>
       ) : null}
     </li>

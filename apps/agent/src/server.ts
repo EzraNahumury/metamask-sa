@@ -62,11 +62,18 @@ export function buildServer() {
     });
   });
 
-  /** Trigger a single tick on demand (demo button). */
-  app.post("/admin/run-tick", async (_req, res) => {
+  /**
+   * Trigger a single tick on demand (demo button).
+   * Optional query/body: ?onlySlug=netflix-mock to limit to one service.
+   */
+  app.post("/admin/run-tick", async (req, res) => {
+    const onlySlug =
+      (typeof req.query.onlySlug === "string" && req.query.onlySlug) ||
+      (typeof req.body?.onlySlug === "string" && req.body.onlySlug) ||
+      undefined;
     try {
-      const decisions = await runTick();
-      res.json({ ranAt: new Date().toISOString(), decisionCount: decisions.length });
+      const decisions = await runTick({ onlySlug });
+      res.json({ ranAt: new Date().toISOString(), decisionCount: decisions.length, onlySlug });
     } catch (e) {
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }

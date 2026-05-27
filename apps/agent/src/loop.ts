@@ -4,7 +4,9 @@
  * consumer can observe in real time.
  */
 import { privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, http } from "viem";
 import { randomUUID } from "node:crypto";
+import { base, OneShotRelayerClient, settleOnchain } from "@delegate/core";
 import { config } from "./config.js";
 import { db, type Decision } from "./db.js";
 import { bus } from "./events.js";
@@ -52,6 +54,11 @@ export async function runTick(options: RunTickOptions = {}): Promise<Decision[]>
   const account = privateKeyToAccount(config.SPIKE_PRIVATE_KEY as `0x${string}`);
   const baseUrl = options.merchantsBaseUrl ?? config.MERCHANTS_BASE_URL;
   const reasoner = new Reasoner(account);
+  const publicClient = createPublicClient({
+    chain: base,
+    transport: http(config.CHAIN_RPC_URL),
+  });
+  const relayer = new OneShotRelayerClient();
 
   bus.emitEvent({ type: "tick.started", at: new Date().toISOString() });
 
@@ -114,6 +121,34 @@ export async function runTick(options: RunTickOptions = {}): Promise<Decision[]>
           decisionId: record.id,
         });
         console.log(`  -> paid, receipt ${result.receipt.receiptId}`);
+
+        // Optional onchain settlement: a tiny USDC transfer via 1Shot 7710 so
+        // the demo gets a real basescan link per PAY without burning the
+        // whole budget. Toggle via ONCHAIN_SETTLEMENT_MODE.
+        if (config.ONCHAIN_SETTLEMENT_MODE === "dust") {
+          try {
+            const settle = await settleOnchain({
+              publicClient,
+              account,
+              relayer,
+              recipient: config.SETTLEMENT_RECIPIENT as `0x${string}`,
+              amountMicroUsdc: config.ONCHAIN_DUST_MICRO_USDC,
+            });
+            record.txHash = settle.txHash;
+            bus.emitEvent({
+              type: "payment.settled",
+              service: svc.slug,
+              decisionId: record.id,
+              txHash: settle.txHash,
+              amountMicroUsdc: settle.amountMicroUsdc.toString(),
+            });
+            console.log(
+              `  -> settled onchain (${settle.includedUpgrade ? "with upgrade, " : ""}${settle.amountMicroUsdc} micro-USDC) tx ${settle.txHash}`,
+            );
+          } catch (e) {
+            console.error(`  -> onchain settlement failed:`, e);
+          }
+        }
       } catch (e) {
         const reason = e instanceof Error ? e.message : String(e);
         bus.emitEvent({ type: "payment.failed", service: svc.slug, reason, decisionId: record.id });

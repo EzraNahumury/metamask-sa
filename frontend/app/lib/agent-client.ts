@@ -18,8 +18,13 @@ export async function fetchServices(): Promise<MerchantService[]> {
   return body.services;
 }
 
-export async function triggerTick(): Promise<{ ranAt: string; decisionCount: number }> {
-  const r = await fetch(`${AGENT_URL}/admin/run-tick`, { method: "POST" });
+export async function triggerTick(opts?: { onlySlug?: string }): Promise<{
+  ranAt: string;
+  decisionCount: number;
+  onlySlug?: string;
+}> {
+  const qs = opts?.onlySlug ? `?onlySlug=${encodeURIComponent(opts.onlySlug)}` : "";
+  const r = await fetch(`${AGENT_URL}/admin/run-tick${qs}`, { method: "POST" });
   if (!r.ok) throw new Error(`run-tick failed: ${r.status}`);
   return r.json();
 }
@@ -49,6 +54,7 @@ export function subscribeAgentEvents(handler: (ev: AgentEvent) => void): () => v
     "decision.recorded",
     "payment.succeeded",
     "payment.failed",
+    "payment.settled",
   ];
   for (const t of types) es.addEventListener(t, onMessage as EventListener);
   return () => {
