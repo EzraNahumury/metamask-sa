@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ExternalLink, FlaskConical, Play, Receipt, Sparkles } from "lucide-react";
+import { Clock, FlaskConical, Github, Play, Radio, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AGENT_URL,
@@ -12,18 +12,25 @@ import {
   subscribeAgentEvents,
   triggerTick,
 } from "../lib/agent-client";
-import { formatMicroUsdc, formatTime } from "../lib/format";
+import { formatMicroUsdc } from "../lib/format";
 import type { AgentEvent, Decision, MerchantService } from "../lib/types";
+import { useCountdown } from "../lib/useCountdown";
 import { cn, formatError } from "../lib/utils";
+import { DecisionRow } from "./DecisionRow";
 import FridayBriefPanel from "./FridayBrief";
 import OnboardingPanel from "./OnboardingPanel";
+import { ServiceHealthStrip } from "./ServiceHealth";
 import { AnimatedNumber } from "./ui/AnimatedNumber";
 import { Aurora } from "./ui/Aurora";
 import { GlassCard } from "./ui/GlassCard";
+import { Logo } from "./ui/Logo";
 import { PrimaryButton } from "./ui/PrimaryButton";
+import { Sparkline } from "./ui/Sparkline";
 import { StatusDot } from "./ui/StatusDot";
 
 type ConnState = "connecting" | "live" | "offline";
+
+const TICK_INTERVAL_SECONDS = 30;
 
 export default function Dashboard() {
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -33,6 +40,7 @@ export default function Dashboard() {
   const [armPending, setArmPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justArrived, setJustArrived] = useState<string | null>(null);
+  const [lastTickAt, setLastTickAt] = useState<string | null>(null);
   const decisionMap = useRef(new Map<string, Decision>());
 
   const upsertDecision = useCallback((d: Decision, mark = false) => {
@@ -79,22 +87,39 @@ export default function Dashboard() {
       } else if (ev.type === "payment.settled") {
         const existing = decisionMap.current.get(ev.decisionId);
         if (existing) upsertDecision({ ...existing, txHash: ev.txHash });
+      } else if (ev.type === "tick.finished") {
+        setLastTickAt(ev.at);
       }
     });
     return off;
   }, [conn, upsertDecision]);
 
+  const countdown = useCountdown(lastTickAt, TICK_INTERVAL_SECONDS);
+
   const stats = useMemo(() => {
     const pays = decisions.filter((d) => d.action === "PAY");
     const refuses = decisions.filter((d) => d.action === "REFUSE");
-    const spentMicro = pays.reduce<bigint>((s, d) => s + BigInt(d.quotedMicroUsdc), BigInt(0));
-    const refusedMicro = refuses.reduce<bigint>((s, d) => s + BigInt(d.quotedMicroUsdc), BigInt(0));
+    const spentMicro = pays.reduce<bigint>(
+      (s, d) => s + BigInt(d.quotedMicroUsdc),
+      BigInt(0),
+    );
+    const refusedMicro = refuses.reduce<bigint>(
+      (s, d) => s + BigInt(d.quotedMicroUsdc),
+      BigInt(0),
+    );
+    const spentSpark = pays.slice(0, 12).reverse().map((d) => Number(BigInt(d.quotedMicroUsdc)));
+    const refusedSpark = refuses.slice(0, 12).reverse().map((d) =>
+      Number(BigInt(d.quotedMicroUsdc)),
+    );
     return {
       paidCount: pays.length,
       refusedCount: refuses.length,
       spentUsd: Number(spentMicro) / 1e6,
       refusedUsd: Number(refusedMicro) / 1e6,
       onchainCount: decisions.filter((d) => d.txHash).length,
+      decisionCount: decisions.length,
+      spentSpark,
+      refusedSpark,
     };
   }, [decisions]);
 
@@ -124,7 +149,8 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-screen text-zinc-100">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8 py-10 sm:py-14 relative z-10">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8 py-8 sm:py-12 relative z-10">
+        <NavBar conn={conn} countdown={countdown} />
         <Hero conn={conn} />
 
         <AnimatePresence>
@@ -137,9 +163,8 @@ export default function Dashboard() {
             >
               {error}
               {conn === "offline" ? (
-                <span className="block mt-1 text-[11px] text-rose-300/70">
-                  agent {AGENT_URL} / merchants {MERCHANTS_URL} not reachable. Start the stack and
-                  reload.
+                <span className="block mt-1 text-[11px] text-rose-300/70 font-mono">
+                  agent {AGENT_URL} not reachable. Boot the stack and reload.
                 </span>
               ) : null}
             </motion.div>
@@ -147,6 +172,8 @@ export default function Dashboard() {
         </AnimatePresence>
 
         <OnboardingPanel />
+
+        <ServiceHealthStrip services={services} decisions={decisions} />
 
         <StatGrid stats={stats} />
 
@@ -163,24 +190,63 @@ export default function Dashboard() {
 
         <DecisionFeed decisions={decisions} justArrived={justArrived} conn={conn} />
 
-        <footer className="mt-14 text-[11px] text-zinc-600 font-mono flex items-center justify-between border-t border-white/5 pt-4">
+        <footer className="mt-14 mb-6 text-[11px] text-zinc-600 font-mono flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center sm:justify-between border-t border-white/5 pt-5">
           <span>
             agent <span className="text-zinc-400">{AGENT_URL}</span>
             <span className="mx-2 text-zinc-700">·</span>
             merchants <span className="text-zinc-400">{MERCHANTS_URL}</span>
           </span>
-          <span className="text-zinc-700">Base mainnet · chain 8453</span>
+          <span className="text-zinc-600 inline-flex items-center gap-2">
+            <Radio className="h-3 w-3 text-emerald-400" /> Base mainnet · chain 8453
+          </span>
         </footer>
       </div>
     </div>
   );
 }
 
+function NavBar({ conn, countdown }: { conn: ConnState; countdown: number }) {
+  return (
+    <nav className="flex items-center justify-between mb-8">
+      <a href="/" className="inline-flex items-center gap-3 group">
+        <Logo size="md" />
+        <span className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold tracking-tight text-zinc-100">
+            DeleGate<span className="text-grad">.AI</span>
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+            chief of staff for onchain money
+          </span>
+        </span>
+      </a>
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono px-3 py-1.5 rounded-full border border-white/[0.06] bg-white/[0.02]">
+          <Clock className="h-3 w-3" />
+          next tick in{" "}
+          <span className="text-zinc-300 tabular-nums">
+            {conn === "live" ? `${countdown}s` : "—"}
+          </span>
+        </div>
+        <StatusDot state={conn} />
+        <a
+          href="https://github.com/EzraNahumury/metamask-sa"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-xl border border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.05] transition-colors"
+          aria-label="source"
+        >
+          <Github className="h-4 w-4" />
+        </a>
+      </div>
+    </nav>
+  );
+}
+
 function Hero({ conn }: { conn: ConnState }) {
   return (
-    <GlassCard variant="strong" className="relative overflow-hidden px-6 sm:px-10 py-10 sm:py-14 mb-10">
+    <GlassCard variant="strong" className="relative overflow-hidden px-6 sm:px-10 py-10 sm:py-14 mb-8">
       <Aurora />
-      <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+      <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-end">
         <div>
           <motion.span
             initial={{ opacity: 0, y: 6 }}
@@ -189,39 +255,57 @@ function Hero({ conn }: { conn: ConnState }) {
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400"
           >
             <Sparkles className="h-3 w-3 text-emerald-300" />
-            ERC-7702 · ERC-7710 · ERC-7715 · x402 · Venice
+            ERC-7702 · 7710 · 7715 · x402 · Venice
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18, duration: 0.6 }}
-            className="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight"
+            className="mt-4 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.05]"
           >
-            DeleGate<span className="text-grad">.AI</span>
+            Hire an agent.<br />
+            <span className="text-grad">Keep the keys.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.6 }}
-            className="mt-3 max-w-lg text-sm sm:text-base text-zinc-400 leading-relaxed"
+            className="mt-4 max-w-xl text-sm sm:text-base text-zinc-400 leading-relaxed"
           >
-            Your AI chief of staff for onchain money — bounded, revocable, multimodal. Runs on Base
-            via MetaMask Smart Accounts, paid through x402.
+            DeleGate.AI pays your subscriptions, refuses anomalies, and ships a Friday Brief —
+            all bounded by a single revocable MetaMask permission, settled in USDC on Base.
           </motion.p>
         </div>
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-col items-start sm:items-end gap-2"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.36, duration: 0.6 }}
+          className="hidden md:block"
         >
-          <StatusDot state={conn} />
-          <span className="text-[11px] text-zinc-600 font-mono">
-            settles via <span className="text-zinc-400">1Shot relayer</span>
-          </span>
+          <Logo size="lg" />
         </motion.div>
       </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.45 }}
+        className="relative mt-8 flex flex-wrap gap-4 text-[11px] text-zinc-500 font-mono"
+      >
+        <Marker label="status" value={conn} />
+        <Marker label="chain" value="Base 8453" />
+        <Marker label="relayer" value="1Shot public" />
+        <Marker label="brain" value="Venice multimodal" />
+      </motion.div>
     </GlassCard>
+  );
+}
+
+function Marker({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-md border border-white/[0.05] bg-white/[0.02] px-2 py-1">
+      <span className="text-zinc-600 uppercase tracking-[0.18em] text-[9px]">{label}</span>
+      <span className="text-zinc-300">{value}</span>
+    </span>
   );
 }
 
@@ -234,14 +318,38 @@ function StatGrid({
     spentUsd: number;
     refusedUsd: number;
     onchainCount: number;
+    decisionCount: number;
+    spentSpark: number[];
+    refusedSpark: number[];
   };
 }) {
   return (
     <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-      <StatCard label="Paid" value={stats.paidCount} hint={`$${stats.spentUsd.toFixed(2)} total`} accent="emerald" />
-      <StatCard label="Refused" value={stats.refusedCount} hint={`$${stats.refusedUsd.toFixed(2)} blocked`} accent="rose" />
-      <StatCard label="Onchain txs" value={stats.onchainCount} hint="settled via 1Shot" accent="sky" />
-      <StatCard label="Decisions" value={stats.paidCount + stats.refusedCount} hint="this session" />
+      <StatCard
+        label="Paid"
+        value={stats.paidCount}
+        hint={`$${stats.spentUsd.toFixed(2)} routed to merchants`}
+        accent="emerald"
+        spark={stats.spentSpark}
+      />
+      <StatCard
+        label="Refused"
+        value={stats.refusedCount}
+        hint={`$${stats.refusedUsd.toFixed(2)} blocked at the gate`}
+        accent="rose"
+        spark={stats.refusedSpark}
+      />
+      <StatCard
+        label="Onchain txs"
+        value={stats.onchainCount}
+        hint="settled via 1Shot 7710 redemption"
+        accent="sky"
+      />
+      <StatCard
+        label="Decisions"
+        value={stats.decisionCount}
+        hint="reasoned by Venice this session"
+      />
     </section>
   );
 }
@@ -251,11 +359,13 @@ function StatCard({
   value,
   hint,
   accent,
+  spark,
 }: {
   label: string;
   value: number;
   hint?: string;
   accent?: "emerald" | "rose" | "sky";
+  spark?: number[];
 }) {
   const tone =
     accent === "emerald"
@@ -265,13 +375,29 @@ function StatCard({
       : accent === "sky"
       ? "text-sky-300"
       : "text-zinc-100";
+  const sparkColor =
+    accent === "emerald" ? "#34d399" : accent === "rose" ? "#fb7185" : "#7dd3fc";
   return (
-    <GlassCard hoverable className="px-4 py-4">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</div>
-      <div className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", tone)}>
-        <AnimatedNumber value={value} />
+    <GlassCard hoverable className="px-4 py-4 group relative overflow-hidden">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</div>
+          <div
+            className={cn(
+              "mt-1 text-3xl font-semibold tracking-tight tabular-nums",
+              tone,
+            )}
+          >
+            <AnimatedNumber value={value} />
+          </div>
+        </div>
+        {spark && spark.length > 0 ? (
+          <div className="opacity-80 group-hover:opacity-100 transition-opacity">
+            <Sparkline values={spark} color={sparkColor} width={70} height={24} />
+          </div>
+        ) : null}
       </div>
-      {hint ? <div className="mt-1 text-[11px] text-zinc-500">{hint}</div> : null}
+      {hint ? <div className="mt-2 text-[11px] text-zinc-500">{hint}</div> : null}
     </GlassCard>
   );
 }
@@ -300,7 +426,7 @@ function DemoControls({
         <div>
           <h2 className="text-sm font-medium text-zinc-200">Demo controls</h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Trigger a tick manually, or arm a 32× anomaly to demo the refusal moment.
+            Run a tick manually. Arm a 32× anomaly to demo the refusal moment.
           </p>
         </div>
       </div>
@@ -343,16 +469,18 @@ function DecisionFeed({
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 pulse-soft" />
           Live decision feed
         </h2>
-        <span className="text-xs text-zinc-500">{decisions.length} total</span>
+        <span className="text-[11px] text-zinc-500 tabular-nums">
+          {decisions.length} decisions · click a row to inspect the Venice round-trip
+        </span>
       </div>
       <div className="hairline mb-4" />
 
       {conn === "offline" && decisions.length === 0 ? (
         <DecisionSkeleton count={3} />
       ) : decisions.length === 0 ? (
-        <GlassCard className="px-6 py-10 text-center text-sm text-zinc-500">
-          Waiting for first decision. Hit <span className="text-zinc-300">Run tick now</span> or wait
-          for the background loop.
+        <GlassCard className="px-6 py-12 text-center text-sm text-zinc-500">
+          The first decision lands as soon as the loop ticks.{" "}
+          <span className="text-zinc-300">Run tick now</span> to fast-forward.
         </GlassCard>
       ) : (
         <motion.ol layout className="flex flex-col gap-2.5">
@@ -380,85 +508,4 @@ function DecisionSkeleton({ count }: { count: number }) {
   );
 }
 
-function DecisionRow({ d, highlight }: { d: Decision; highlight: boolean }) {
-  const isPay = d.action === "PAY";
-  const isRefuse = d.action === "REFUSE";
-  const tone = isPay
-    ? "border-emerald-500/25 from-emerald-500/[0.06]"
-    : isRefuse
-    ? "border-rose-500/25 from-rose-500/[0.06]"
-    : "border-amber-500/25 from-amber-500/[0.06]";
-  const tagColor = isPay ? "text-emerald-300" : isRefuse ? "text-rose-300" : "text-amber-300";
-
-  return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: -6, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -8 }}
-      transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
-      className={cn(
-        "relative rounded-xl border bg-gradient-to-b to-transparent px-4 py-3.5 backdrop-blur",
-        tone,
-      )}
-    >
-      <AnimatePresence>
-        {highlight ? (
-          <motion.div
-            initial={{ opacity: 0.45 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 1.1, ease: "easeOut" }}
-            className={cn(
-              "pointer-events-none absolute inset-0 rounded-xl",
-              isPay ? "bg-emerald-500/15" : isRefuse ? "bg-rose-500/15" : "bg-amber-500/15",
-            )}
-          />
-        ) : null}
-      </AnimatePresence>
-      <div className="relative flex items-baseline justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <span
-            className={cn(
-              "text-[10px] font-mono uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-md border",
-              isPay
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                : isRefuse
-                ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-300",
-            )}
-          >
-            {d.action}
-          </span>
-          <span className="text-sm font-medium text-zinc-100 truncate">{d.service}</span>
-          <span className={cn("text-xs whitespace-nowrap text-zinc-400 tabular-nums", tagColor)}>
-            {formatMicroUsdc(d.quotedMicroUsdc)}
-          </span>
-        </div>
-        <span className="text-[11px] text-zinc-500 whitespace-nowrap tabular-nums">
-          {formatTime(d.decidedAt)} · conf {d.confidence.toFixed(2)}
-        </span>
-      </div>
-      <div className="relative text-sm text-zinc-300 mt-1.5 leading-relaxed">{d.reason}</div>
-      {d.receiptId || d.txHash ? (
-        <div className="relative mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 font-mono items-center">
-          {d.receiptId ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Receipt className="h-3 w-3" /> {d.receiptId.slice(0, 8)}…
-            </span>
-          ) : null}
-          {d.txHash ? (
-            <a
-              href={`https://basescan.org/tx/${d.txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" /> {d.txHash.slice(0, 12)}…
-              <ArrowRight className="h-3 w-3 opacity-60" />
-            </a>
-          ) : null}
-        </div>
-      ) : null}
-    </motion.li>
-  );
-}
+formatMicroUsdc; // tree-shake guard — used by DecisionRow.

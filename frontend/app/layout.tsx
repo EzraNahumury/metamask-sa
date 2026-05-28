@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "DeleGate.AI — chief of staff for onchain money",
   description:
     "DeleGate.AI is your AI chief of staff for onchain money — bounded, revocable, multimodal.",
+  icons: {
+    icon: "/lm-removebg-preview.png",
+    shortcut: "/lm-removebg-preview.png",
+    apple: "/lm-removebg-preview.png",
+  },
 };
 
 export default function RootLayout({
