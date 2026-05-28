@@ -1,11 +1,12 @@
 "use client";
 
 import { createPublicClient, createWalletClient, custom, defineChain, http } from "viem";
+import type { EIP1193Provider } from "./wallet-discovery";
 
 /**
- * Plain Base mainnet definition. We avoid viem's bundled `celo` / `base`
- * exports because their chain-specific block formatters diverge from the
- * generic Chain type that @metamask/smart-accounts-kit's actions expect.
+ * Plain Base mainnet definition. We avoid viem's bundled `base` export
+ * because its chain-specific block formatters diverge from the generic
+ * Chain type that @metamask/smart-accounts-kit's actions expect.
  */
 export const base = defineChain({
   id: 8453,
@@ -23,22 +24,22 @@ export const publicClient = createPublicClient({
   transport: http(),
 });
 
-type EthereumProvider = {
-  request: (args: { method: string; params?: unknown[] | object }) => Promise<unknown>;
-};
-
-/** Detect MetaMask (or any EIP-1193 provider) injected by the browser. */
-export function getInjectedProvider(): EthereumProvider | null {
+/**
+ * Fallback when no EIP-6963 wallet announces itself. Returns whatever
+ * legacy injection grabbed `window.ethereum`. Use this only as a last
+ * resort.
+ */
+export function getInjectedProvider(): EIP1193Provider | null {
   if (typeof window === "undefined") return null;
-  const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
+  const eth = (window as unknown as { ethereum?: EIP1193Provider }).ethereum;
   return eth ?? null;
 }
 
 /**
- * Ask the wallet to switch (or add) Base. Some wallets reject `wallet_switchEthereumChain`
- * with code 4902 if the chain isn't known — in which case we add it first.
+ * Ask the wallet to switch to Base. Adds the chain first if the wallet
+ * rejects with code 4902 ("chain not configured").
  */
-export async function ensureBaseChain(provider: EthereumProvider): Promise<void> {
+export async function ensureBaseChain(provider: EIP1193Provider): Promise<void> {
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
@@ -62,14 +63,11 @@ export async function ensureBaseChain(provider: EthereumProvider): Promise<void>
   }
 }
 
-/** Connect the injected wallet, switch to Base, return a viem walletClient. */
-export async function connectWallet() {
-  const provider = getInjectedProvider();
-  if (!provider) {
-    throw new Error(
-      "No EIP-1193 provider found. Install MetaMask (or any compatible wallet) and reload.",
-    );
-  }
+/**
+ * Connect a specific EIP-1193 provider (chosen via the in-app picker)
+ * and return a viem walletClient bound to its first account.
+ */
+export async function connectWithProvider(provider: EIP1193Provider) {
   const accounts = (await provider.request({ method: "eth_requestAccounts" })) as `0x${string}`[];
   if (!accounts || accounts.length === 0) {
     throw new Error("Wallet returned no accounts.");
