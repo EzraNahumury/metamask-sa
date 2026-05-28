@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "DeleGate.AI — chief of staff for onchain money",
+  title: {
+    template: "DeleGate.AI | %s",
+    default: "DeleGate.AI | Chief of staff for onchain money",
+  },
   description:
     "Bounded, revocable, multimodal. DeleGate.AI pays your subscriptions over x402, refuses anomalies in real time, and settles onchain via 1Shot — all on Base mainnet.",
   icons: {
@@ -26,11 +18,26 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full relative">{children}</body>
+    <html lang="en">
+      <head>
+        {/* Fontshare — Panchang (display) */}
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=panchang@300,400,500,600,700&display=swap"
+          rel="stylesheet"
+        />
+        {/* Google — Inter (body) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
