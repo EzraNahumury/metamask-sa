@@ -1,142 +1,209 @@
 @import "tailwindcss";
 
 :root {
-  --background: 8 10 14;
-  --foreground: 240 246 252;
-  --muted: 148 163 184;
-  --border: 30 41 59;
-  --accent: 16 185 129;
-  --accent-soft: 16 185 129;
+  /* Warm off-black palette — less Vercel, more newsroom. */
+  --bg: 10 11 16;
+  --bg-2: 13 10 19;
+  --paper: 17 18 24;
+  --paper-2: 22 19 28;
+  --ink: 240 241 244;
+  --ink-soft: 158 162 174;
+  --rule: 36 37 47;
+  --rule-soft: 26 27 34;
+
+  --accent: 16 185 129;            /* emerald — used sparingly */
+  --accent-warm: 245 158 11;        /* amber — second voice */
   --danger: 244 63 94;
-  --warning: 245 158 11;
-  --card: 17 24 39;
 }
 
 @theme inline {
-  --color-background: rgb(var(--background));
-  --color-foreground: rgb(var(--foreground));
+  --color-background: rgb(var(--bg));
+  --color-foreground: rgb(var(--ink));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-geist-sans);
 }
 
 html, body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-  font-feature-settings: "ss01", "cv11";
+  background-color: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-feature-settings: "ss01", "cv11", "calt";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  /* Off-axis warm/cool blend instead of symmetric radial mesh. */
   background-image:
-    radial-gradient(at 8% 0%, rgba(16, 185, 129, 0.07) 0px, transparent 45%),
-    radial-gradient(at 92% 4%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(244, 63, 94, 0.04) 0px, transparent 45%);
+    radial-gradient(60% 50% at 100% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 70%),
+    radial-gradient(45% 35% at 0% 35%, rgba(167, 139, 250, 0.04) 0%, transparent 70%),
+    radial-gradient(70% 55% at 50% 100%, rgba(245, 158, 11, 0.03) 0%, transparent 70%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
-/* Subtle noise texture for depth — applied to <body::before>. */
+/* Faint grain. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.025;
+  opacity: 0.02;
   z-index: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Aurora ambient glow that drifts slowly behind the hero. */
-@keyframes aurora-shift {
-  0%, 100% { transform: translate3d(-6%, -4%, 0) rotate(-2deg); }
-  50%      { transform: translate3d(4%, 4%, 0) rotate(2deg); }
-}
-.aurora-bg {
-  position: absolute;
-  inset: -20%;
+/* Paper card — primary surface. Subtle inner highlight + outer hairline. */
+.paper {
   background:
-    radial-gradient(40% 40% at 20% 30%, rgba(16, 185, 129, 0.18), transparent 60%),
-    radial-gradient(40% 40% at 80% 20%, rgba(56, 189, 248, 0.15), transparent 60%),
-    radial-gradient(40% 40% at 60% 80%, rgba(167, 139, 250, 0.12), transparent 60%);
-  filter: blur(40px);
-  animation: aurora-shift 18s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0) 50%),
+    rgba(17, 18, 24, 0.6);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 0 rgba(0, 0, 0, 0.3),
+    0 24px 60px -40px rgba(0, 0, 0, 0.6);
+}
+.paper-thick {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+    rgba(22, 19, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 30px 80px -40px rgba(0, 0, 0, 0.7);
 }
 
-/* Glass surface — used by main cards. */
-.glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.0));
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 12px 40px -16px rgba(0, 0, 0, 0.5);
-}
-.glass-strong {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 20px 60px -20px rgba(0, 0, 0, 0.6);
+/* Editorial display lockup. */
+.display {
+  font-feature-settings: "ss01", "cv11", "calt";
+  letter-spacing: -0.04em;
+  line-height: 0.95;
 }
 
-/* Soft "ping" pulse for status indicators. */
+/* Accent strip — used on decision rows / hero edge. */
+.accent-stripe-emerald {
+  background: linear-gradient(180deg, #34d399, #059669);
+  box-shadow: 0 0 18px -3px rgba(16, 185, 129, 0.55);
+}
+.accent-stripe-rose {
+  background: linear-gradient(180deg, #fb7185, #be123c);
+  box-shadow: 0 0 18px -3px rgba(244, 63, 94, 0.5);
+}
+.accent-stripe-amber {
+  background: linear-gradient(180deg, #fbbf24, #b45309);
+  box-shadow: 0 0 18px -3px rgba(245, 158, 11, 0.45);
+}
+
+/* Marker pulse — for live indicators. */
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.55; transform: scale(1.18); }
+  50% { opacity: 0.55; transform: scale(1.2); }
 }
 .pulse-soft { animation: pulse-soft 1.8s ease-in-out infinite; }
 
-/* Gradient text accent. */
+/* Slow ambient ticker — marquee style. */
+@keyframes ticker {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+.ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker 40s linear infinite;
+}
+
+/* Gradient text — used selectively, NOT everywhere. */
 .text-grad {
-  background: linear-gradient(135deg, #34d399 0%, #38bdf8 60%, #a78bfa 100%);
+  background: linear-gradient(135deg, #d1fae5 0%, #6ee7b7 60%, #34d399 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Hairline divider with gradient fade. */
+/* Hairline rules. */
 .hairline {
   height: 1px;
-  width: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+.hairline-v {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.08), transparent);
 }
 
-/* Subtle hover lift for cards. */
-.card-hover {
-  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
-              box-shadow 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
-              border-color 220ms ease;
+/* Buttons — tactile with inner highlight. */
+.btn-primary {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 40%),
+    linear-gradient(180deg, #34d399, #059669);
+  color: #022c22;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 12px 28px -14px rgba(16, 185, 129, 0.5);
 }
-.card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.14);
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a0b10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 12px 28px -14px rgba(255, 255, 255, 0.25);
 }
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.02);
+  color: rgb(var(--ink));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.btn-danger {
+  background: rgba(244, 63, 94, 0.08);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+.btn-danger:hover { background: rgba(244, 63, 94, 0.15); }
 
-/* Custom scrollbars for the decision feed. */
+/* Scrollbar polish. */
 .scrollbar-soft::-webkit-scrollbar { width: 6px; }
 .scrollbar-soft::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.18);
   border-radius: 999px;
 }
-.scrollbar-soft::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
 
-/* Shimmer for loading skeletons. */
-@keyframes shimmer {
-  0% { background-position: -1200px 0; }
-  100% { background-position: 1200px 0; }
+/* Card lift. */
+.lift {
+  transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              border-color 200ms ease,
+              background 200ms ease;
 }
-.skeleton {
-  background: linear-gradient(90deg,
-    rgba(148, 163, 184, 0.05) 0%,
-    rgba(148, 163, 184, 0.12) 50%,
-    rgba(148, 163, 184, 0.05) 100%);
-  background-size: 1200px 100%;
-  animation: shimmer 1.6s linear infinite;
+.lift:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tabular nums helper. */
+.tabnum { font-variant-numeric: tabular-nums; }
+
+/* Loading row — diagonal stripe instead of shimmer, harder to recognise as template. */
+@keyframes diagonal-shift {
+  0% { background-position: 0 0; }
+  100% { background-position: 24px 0; }
+}
+.loading-stripe {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.025) 0px,
+    rgba(255, 255, 255, 0.025) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  background-size: 24px 24px;
+  animation: diagonal-shift 1.4s linear infinite;
 }

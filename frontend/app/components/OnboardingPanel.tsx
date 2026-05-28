@@ -17,8 +17,8 @@ import {
   type StoredGrant,
 } from "../lib/permission-store";
 import { cn, formatError } from "../lib/utils";
-import { GlassCard } from "./ui/GlassCard";
-import { PrimaryButton } from "./ui/PrimaryButton";
+import { Btn } from "./ui/Btn";
+import { Paper } from "./ui/Paper";
 import { WalletPicker } from "./WalletPicker";
 
 const SESSION_ACCOUNT_ADDRESS =
@@ -26,9 +26,9 @@ const SESSION_ACCOUNT_ADDRESS =
   ("0x5Aea061d814A72de9EE9171bE86F45f48e1E2f5d" as `0x${string}`);
 
 const PRESET_BUDGETS = [
-  { label: "$2", per: "/wk", usd: 2 },
-  { label: "$5", per: "/wk", usd: 5 },
-  { label: "$10", per: "/wk", usd: 10 },
+  { label: "$2", per: "wk", usd: 2 },
+  { label: "$5", per: "wk", usd: 5 },
+  { label: "$10", per: "wk", usd: 10 },
 ];
 
 type PickerIntent = "connect" | "grant" | null;
@@ -137,161 +137,173 @@ export default function OnboardingPanel() {
         onPick={onPick}
       />
 
-      <GlassCard className="mb-8 p-6 sm:p-7">
-        <header className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-6 mb-5">
-          <div className="flex items-start gap-3">
-            <div className="h-11 w-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-emerald-300" />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-50">
-                Activate <span className="text-grad">DeleGate</span>
-              </h2>
-              <p className="text-xs text-zinc-500 mt-1 max-w-md leading-relaxed">
-                Connect a MetaMask Smart Account, then grant an{" "}
-                <span className="text-zinc-300">ERC-7715</span> advanced permission. Caveats run
-                onchain — revocable in one tap.
-              </p>
-            </div>
-          </div>
-          <div className="sm:ml-auto text-[11px] uppercase tracking-[0.18em] text-zinc-500 font-mono">
-            {address ? (
-              <span>
-                {walletName ? <span className="text-zinc-400 normal-case">{walletName} · </span> : null}
-                <span className="text-zinc-300">{shortAddr(address)}</span>
-              </span>
-            ) : (
-              <span>not connected</span>
-            )}
-          </div>
-        </header>
-
-        <AnimatePresence>
-          {error ? (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mb-4 rounded-lg border border-rose-700/40 bg-rose-950/30 px-3 py-2 text-sm text-rose-200"
-            >
-              {error}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait" initial={false}>
-          {!grant ? (
-            <motion.div
-              key="grant-form"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
-              className="flex flex-col gap-5"
-            >
+      <Paper variant="thick" className="overflow-hidden">
+        <div className="grid grid-cols-12">
+          <div className="col-span-12 lg:col-span-5 p-6 sm:p-7 border-b lg:border-b-0 lg:border-r border-white/[0.04]">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-11 w-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-emerald-300" />
+              </div>
               <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500 mb-2">
-                  Weekly cap
+                <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+                  Step 01
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_BUDGETS.map((b) => {
-                    const active = budgetUsd === b.usd;
-                    return (
-                      <motion.button
-                        key={b.usd}
-                        onClick={() => setBudgetUsd(b.usd)}
-                        whileTap={{ scale: 0.97 }}
-                        className={cn(
-                          "relative h-11 min-w-[88px] rounded-xl border px-3 text-sm font-medium transition-colors",
-                          active
-                            ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-                            : "border-white/10 bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200",
-                        )}
-                      >
-                        <span className="tabular-nums">{b.label}</span>
-                        <span className="text-zinc-500 ml-0.5">{b.per}</span>
-                        {active ? (
-                          <motion.span
-                            layoutId="cap-pill"
-                            className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-emerald-400/40"
-                            transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                          />
-                        ) : null}
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                <h3 className="text-xl font-semibold tracking-tight text-zinc-100 mt-1">
+                  Grant a budget
+                </h3>
               </div>
+            </div>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              One MetaMask signature. ERC-7715 advanced permission with a
+              weekly cap, an expiry, and an allowed callee list. The agent
+              redeems against it through ERC-7710 on every PAY.
+            </p>
+            <div className="hairline my-5" />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 mb-2 font-mono">
+              wallet
+            </div>
+            <div className="text-sm font-mono">
+              {address ? (
+                <span>
+                  {walletName ? (
+                    <span className="text-zinc-300">{walletName} </span>
+                  ) : null}
+                  <span className="text-zinc-500">·</span>{" "}
+                  <span className="text-zinc-200">{shortAddr(address)}</span>
+                </span>
+              ) : (
+                <span className="text-zinc-500">not connected</span>
+              )}
+            </div>
+          </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {!address ? (
-                  <PrimaryButton onClick={() => openPicker("connect")} loading={busy === "connect"}>
-                    <Wallet className="h-4 w-4" />
-                    Connect wallet
-                  </PrimaryButton>
-                ) : (
-                  <PrimaryButton variant="ghost" disabled>
-                    <Check className="h-4 w-4 text-emerald-300" />
-                    Connected
-                  </PrimaryButton>
-                )}
-                <PrimaryButton
-                  variant="secondary"
-                  onClick={() => openPicker("grant")}
-                  loading={busy === "grant"}
+          <div className="col-span-12 lg:col-span-7 p-6 sm:p-7 flex flex-col gap-5">
+            <AnimatePresence>
+              {error ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="rounded-lg border border-rose-700/40 bg-rose-950/30 px-3 py-2 text-sm text-rose-200"
                 >
-                  <KeyRound className="h-4 w-4" />
-                  Grant DeleGate ${budgetUsd}/week
-                </PrimaryButton>
-              </div>
+                  {error}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
-              <p className="text-[11px] text-zinc-500 leading-relaxed">
-                Note: the cap is not an escrow. The agent can only spend up to{" "}
-                <span className="text-zinc-300">${budgetUsd}</span> when it actually pays a merchant
-                — anything unused stays in your wallet.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="grant-status"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="flex flex-col gap-4"
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <CaveatField
-                  label="Cap"
-                  value={`$${(Number(BigInt(grant.periodAmount)) / 1e6).toFixed(2)}`}
-                  accent
-                />
-                <CaveatField
-                  label="Period"
-                  value={`${Math.round(grant.periodDuration / 86400)}d`}
-                />
-                <CaveatField
-                  label="Expires"
-                  value={new Date(grant.expiry * 1000).toLocaleDateString()}
-                />
-                <CaveatField label="Session signer" value={shortAddr(grant.signerAddress)} mono />
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 text-xs text-emerald-300">
-                  <Check className="h-4 w-4" /> DeleGate active — agent redeems this grant on every PAY.
-                </div>
-                <PrimaryButton variant="danger" size="sm" onClick={onRevokeLocal}>
-                  Forget grant
-                </PrimaryButton>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </GlassCard>
+            <AnimatePresence mode="wait" initial={false}>
+              {!grant ? (
+                <motion.div
+                  key="form"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col gap-5"
+                >
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 mb-2 font-mono">
+                      weekly cap
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_BUDGETS.map((b) => {
+                        const active = budgetUsd === b.usd;
+                        return (
+                          <motion.button
+                            key={b.usd}
+                            onClick={() => setBudgetUsd(b.usd)}
+                            whileTap={{ scale: 0.97 }}
+                            className={cn(
+                              "relative h-11 min-w-[88px] rounded-xl border px-3 text-sm font-medium transition-colors",
+                              active
+                                ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
+                                : "border-white/[0.07] bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200",
+                            )}
+                          >
+                            <span className="tabnum">{b.label}</span>
+                            <span className="text-zinc-500 ml-1">/ {b.per}</span>
+                            {active ? (
+                              <motion.span
+                                layoutId="cap-pill"
+                                className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-emerald-400/40"
+                                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                              />
+                            ) : null}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!address ? (
+                      <Btn onClick={() => openPicker("connect")} loading={busy === "connect"} variant="ghost">
+                        <Wallet className="h-4 w-4" />
+                        Connect wallet
+                      </Btn>
+                    ) : (
+                      <Btn variant="ghost" disabled>
+                        <Check className="h-4 w-4 text-emerald-300" />
+                        Connected
+                      </Btn>
+                    )}
+                    <Btn
+                      variant="primary"
+                      onClick={() => openPicker("grant")}
+                      loading={busy === "grant"}
+                    >
+                      <KeyRound className="h-4 w-4" />
+                      Sign ERC-7715 grant
+                    </Btn>
+                  </div>
+
+                  <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    The cap is not an escrow. The agent can only spend up to{" "}
+                    <span className="text-zinc-300">${budgetUsd}</span> when it
+                    actually pays a merchant.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="active"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="flex flex-col gap-4"
+                >
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <Field
+                      label="cap"
+                      value={`$${(Number(BigInt(grant.periodAmount)) / 1e6).toFixed(2)}`}
+                      accent
+                    />
+                    <Field label="period" value={`${Math.round(grant.periodDuration / 86400)}d`} />
+                    <Field
+                      label="expires"
+                      value={new Date(grant.expiry * 1000).toLocaleDateString()}
+                    />
+                    <Field label="signer" value={shortAddr(grant.signerAddress)} mono />
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 text-xs text-emerald-300">
+                      <Check className="h-4 w-4" />
+                      Active — agent redeems on every PAY.
+                    </div>
+                    <Btn variant="danger" size="sm" onClick={onRevokeLocal}>
+                      Forget grant
+                    </Btn>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </Paper>
     </>
   );
 }
 
-function CaveatField({
+function Field({
   label,
   value,
   accent,
@@ -303,11 +315,13 @@ function CaveatField({
   mono?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</div>
+    <div className="rounded-xl border border-white/[0.05] bg-white/[0.012] px-3 py-2.5">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 font-mono">
+        {label}
+      </div>
       <div
         className={cn(
-          "mt-0.5 text-base font-semibold tracking-tight tabular-nums",
+          "mt-0.5 text-base font-semibold tracking-tight tabnum",
           accent ? "text-emerald-300" : "text-zinc-100",
           mono && "font-mono text-sm",
         )}
