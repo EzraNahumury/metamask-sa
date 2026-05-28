@@ -1,24 +1,31 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useBaseUsdcBalance } from "../lib/useBaseBalance";
 import type { Decision } from "../lib/types";
+import { Copyable } from "./ui/Copyable";
 import { Logo } from "./ui/Logo";
 import { Paper } from "./ui/Paper";
 
 const BURNER_ADDRESS = "0x5Aea061d814A72de9EE9171bE86F45f48e1E2f5d" as const;
-const LATEST_PROOF_TX = "0xf199a88f1f7e2d28005365acd5ba63793d166c6b1d94cf77a2a807f53746052c" as const;
+const LATEST_PROOF_TX =
+  "0xf199a88f1f7e2d28005365acd5ba63793d166c6b1d94cf77a2a807f53746052c" as const;
 
 export function Hero({ decisions }: { decisions: Decision[] }) {
   const { balance } = useBaseUsdcBalance(BURNER_ADDRESS);
   const onchain = decisions.filter((d) => d.txHash);
   const latestTx = onchain[0]?.txHash ?? LATEST_PROOF_TX;
+  const recent = decisions.slice(0, 4);
 
   return (
     <section className="relative mb-12">
       <div className="grid grid-cols-12 gap-6">
-        <Paper variant="thick" className="col-span-12 lg:col-span-8 relative overflow-hidden px-6 sm:px-10 py-10 sm:py-14">
+        <Paper
+          variant="thick"
+          className="col-span-12 lg:col-span-8 relative overflow-hidden px-6 sm:px-10 py-10 sm:py-14"
+        >
           <BackgroundOrnament />
           <div className="relative">
             <motion.span
@@ -79,12 +86,17 @@ export function Hero({ decisions }: { decisions: Decision[] }) {
                 <ArrowUpRight className="h-4 w-4" />
               </a>
             </motion.div>
+
+            <RecentActivity recent={recent} />
           </div>
         </Paper>
 
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
           <Paper liftable className="px-5 py-5 relative overflow-hidden">
-            <BalanceLabel />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 inline-flex items-center gap-2">
+              Burner balance
+              <span className="h-1 w-1 rounded-full bg-emerald-400 pulse-soft" />
+            </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span className="display text-5xl font-semibold text-zinc-100 tabnum">
                 {balance == null ? "—" : balance.toFixed(2)}
@@ -95,7 +107,16 @@ export function Hero({ decisions }: { decisions: Decision[] }) {
               on Base · 6 decimals
             </div>
             <div className="hairline my-4" />
-            <AddressRow address={BURNER_ADDRESS} />
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+                Account
+              </span>
+              <Copyable
+                value={BURNER_ADDRESS}
+                label={`${BURNER_ADDRESS.slice(0, 6)}…${BURNER_ADDRESS.slice(-4)}`}
+                className="text-[11px] hover:text-emerald-300"
+              />
+            </div>
           </Paper>
 
           <Paper liftable className="px-5 py-4 flex items-center gap-4">
@@ -104,11 +125,9 @@ export function Hero({ decisions }: { decisions: Decision[] }) {
               <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">
                 Venice credit
               </div>
-              <div className="text-2xl font-semibold text-zinc-100 tabnum">
-                $4.65
-              </div>
+              <div className="text-2xl font-semibold text-zinc-100 tabnum">$4.65</div>
               <div className="text-[11px] text-zinc-600 font-mono mt-0.5">
-                x402 wallet-auth · no API key
+                x402 wallet auth · no API key
               </div>
             </div>
           </Paper>
@@ -154,13 +173,76 @@ function BackgroundOrnament() {
   );
 }
 
-function BalanceLabel() {
+function RecentActivity({ recent }: { recent: Decision[] }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30 * 1000);
+    return () => clearInterval(id);
+  }, []);
+  // Suppress lint — tick triggers re-render so relative timestamps refresh.
+  void tick;
+
+  if (recent.length === 0) return null;
   return (
-    <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 inline-flex items-center gap-2">
-      Burner balance
-      <span className="h-1 w-1 rounded-full bg-emerald-400 pulse-soft" />
+    <div className="mt-9 max-w-xl">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-600 mb-2 font-mono">
+        Recent activity
+      </div>
+      <ul className="flex flex-col gap-1.5">
+        <AnimatePresence initial={false}>
+          {recent.slice(0, 3).map((d) => (
+            <motion.li
+              key={d.id}
+              layout
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="flex items-center gap-3 text-[12px] text-zinc-400 font-mono"
+            >
+              <ActivityDot action={d.action} />
+              <span
+                className={
+                  d.action === "PAY"
+                    ? "text-emerald-300"
+                    : d.action === "REFUSE"
+                    ? "text-rose-300"
+                    : "text-amber-300"
+                }
+              >
+                {d.action.toLowerCase()}
+              </span>
+              <span className="text-zinc-300">{d.service.replace("-mock", "")}</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-zinc-500 tabnum">{relTime(d.decidedAt)}</span>
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
     </div>
   );
+}
+
+function ActivityDot({ action }: { action: Decision["action"] }) {
+  const color =
+    action === "PAY"
+      ? "bg-emerald-400"
+      : action === "REFUSE"
+      ? "bg-rose-400"
+      : "bg-amber-400";
+  return (
+    <span className="relative inline-flex h-1.5 w-1.5">
+      <span className={`relative inline-block h-1.5 w-1.5 rounded-full ${color}`} />
+    </span>
+  );
+}
+
+function relTime(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
 function SmallStat({
@@ -184,22 +266,5 @@ function SmallStat({
         {value}
       </div>
     </Paper>
-  );
-}
-
-function AddressRow({ address }: { address: `0x${string}` }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Account</span>
-      <a
-        href={`https://basescan.org/address/${address}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-mono text-[11px] text-zinc-300 hover:text-emerald-300 transition-colors inline-flex items-center gap-1"
-      >
-        {address.slice(0, 6)}…{address.slice(-4)}
-        <ArrowUpRight className="h-3 w-3 opacity-60" />
-      </a>
-    </div>
   );
 }

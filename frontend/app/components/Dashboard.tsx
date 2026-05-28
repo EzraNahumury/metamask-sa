@@ -14,13 +14,19 @@ import {
 } from "../lib/agent-client";
 import type { AgentEvent, Decision, MerchantService } from "../lib/types";
 import { useCountdown } from "../lib/useCountdown";
+import { pushToast } from "../lib/useToasts";
 import { cn, formatError } from "../lib/utils";
+import {
+  DecisionFilters,
+  type DecisionFilter,
+} from "./DecisionFilters";
 import { DecisionRow } from "./DecisionRow";
 import FridayBriefPanel from "./FridayBrief";
 import { Hero } from "./Hero";
 import OnboardingPanel from "./OnboardingPanel";
 import { ServiceHealthStrip } from "./ServiceHealth";
 import { Btn } from "./ui/Btn";
+import { Kbd } from "./ui/Kbd";
 import { Logo } from "./ui/Logo";
 import { Marquee } from "./ui/Marquee";
 import { Paper } from "./ui/Paper";
@@ -49,6 +55,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [justArrived, setJustArrived] = useState<string | null>(null);
   const [lastTickAt, setLastTickAt] = useState<string | null>(null);
+  const [filter, setFilter] = useState<DecisionFilter>("all");
   const decisionMap = useRef(new Map<string, Decision>());
 
   const upsertDecision = useCallback((d: Decision, mark = false) => {
@@ -89,12 +96,23 @@ export default function Dashboard() {
     const off = subscribeAgentEvents((ev: AgentEvent) => {
       if (ev.type === "decision.recorded") {
         upsertDecision(ev.decision, true);
+        const tone = ev.decision.action === "REFUSE" ? "danger" : "success";
+        pushToast({
+          tone,
+          title: `${ev.decision.action} · ${ev.decision.service}`,
+          body: ev.decision.reason,
+        });
       } else if (ev.type === "payment.succeeded") {
         const existing = decisionMap.current.get(ev.decisionId);
         if (existing) upsertDecision({ ...existing, receiptId: ev.receiptId });
       } else if (ev.type === "payment.settled") {
         const existing = decisionMap.current.get(ev.decisionId);
         if (existing) upsertDecision({ ...existing, txHash: ev.txHash });
+        pushToast({
+          tone: "info",
+          title: `Settled on Base`,
+          body: `${ev.service} · tx ${ev.txHash.slice(0, 12)}…`,
+        });
       } else if (ev.type === "tick.finished") {
         setLastTickAt(ev.at);
       }
@@ -110,29 +128,84 @@ export default function Dashboard() {
       .reduce<number>((sum, d) => sum + Number(BigInt(d.quotedMicroUsdc)) / 1e6, 0);
   }, [decisions]);
 
-  const onTick = async () => {
+  const filtered = useMemo(() => {
+    switch (filter) {
+      case "pay":
+        return decisions.filter((d) => d.action === "PAY");
+      case "refuse":
+        return decisions.filter((d) => d.action === "REFUSE");
+      case "onchain":
+        return decisions.filter((d) => !!d.txHash);
+      default:
+        return decisions;
+    }
+  }, [decisions, filter]);
+
+  const filterCounts = useMemo<Record<DecisionFilter, number>>(
+    () => ({
+      all: decisions.length,
+      pay: decisions.filter((d) => d.action === "PAY").length,
+      refuse: decisions.filter((d) => d.action === "REFUSE").length,
+      onchain: decisions.filter((d) => !!d.txHash).length,
+    }),
+    [decisions],
+  );
+
+  const onTick = useCallback(async () => {
     setTicking(true);
     setError(null);
     try {
       await triggerTick();
     } catch (e) {
-      setError(formatError(e));
+      const msg = formatError(e);
+      setError(msg);
+      pushToast({ tone: "danger", title: "Tick failed", body: msg });
     } finally {
       setTicking(false);
     }
-  };
+  }, []);
 
-  const onArm = async (slug: string) => {
+  const onArm = useCallback(async (slug: string) => {
     setArmPending(slug);
     setError(null);
     try {
       await armAnomaly(slug);
+      pushToast({
+        tone: "warn",
+        title: `Anomaly armed`,
+        body: `${slug} will quote 32× on its next call`,
+      });
     } catch (e) {
-      setError(formatError(e));
+      const msg = formatError(e);
+      setError(msg);
+      pushToast({ tone: "danger", title: "Arm failed", body: msg });
     } finally {
       setArmPending(null);
     }
-  };
+  }, []);
+
+  // Keyboard shortcuts: T = tick, F = friday brief scroll.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "t" || e.key === "T") {
+        e.preventDefault();
+        if (conn === "live" && !ticking) onTick();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        document.getElementById("friday-brief")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (e.key === "g" || e.key === "G") {
+        e.preventDefault();
+        document.getElementById("activate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [conn, ticking, onTick]);
 
   return (
     <div className="relative min-h-screen text-zinc-100">
@@ -167,12 +240,25 @@ export default function Dashboard() {
         </AnimatePresence>
 
         <section id="activate" className="mb-12">
-          <SectionHeader index="01" title="Activate" caption="Connect, set the cap, sign once." />
+          <SectionHeader
+            index="01"
+            title="Activate"
+            caption="Connect, set the cap, sign once."
+            right={
+              <span className="hidden md:inline text-[11px] text-zinc-500 font-mono">
+                shortcut <Kbd>G</Kbd>
+              </span>
+            }
+          />
           <OnboardingPanel />
         </section>
 
         <section className="mb-12">
-          <SectionHeader index="02" title="Subscriptions" caption="Five mock services priced over x402." />
+          <SectionHeader
+            index="02"
+            title="Subscriptions"
+            caption="Five mock services priced over x402."
+          />
           <ServiceHealthStrip services={services} decisions={decisions} />
         </section>
 
@@ -181,6 +267,11 @@ export default function Dashboard() {
             index="03"
             title="Demo controls"
             caption="Manual tick. Or arm a 32× anomaly to see the agent refuse."
+            right={
+              <span className="hidden md:inline text-[11px] text-zinc-500 font-mono">
+                shortcut <Kbd>T</Kbd>
+              </span>
+            }
           />
           <Paper className="px-5 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
@@ -216,11 +307,16 @@ export default function Dashboard() {
           </Paper>
         </section>
 
-        <section className="mb-12">
+        <section id="friday-brief" className="mb-12 scroll-mt-24">
           <SectionHeader
             index="04"
             title="Friday Brief"
             caption="Three Venice endpoints in one call — text · image · audio."
+            right={
+              <span className="hidden md:inline text-[11px] text-zinc-500 font-mono">
+                shortcut <Kbd>F</Kbd>
+              </span>
+            }
           />
           <FridayBriefPanel />
         </section>
@@ -230,11 +326,7 @@ export default function Dashboard() {
             index="05"
             title="Live decision feed"
             caption="Every PAY · REFUSE · ESCALATE the agent fires, in real time."
-            right={
-              <span className="text-[11px] text-zinc-500 font-mono">
-                click a row to read the Venice round-trip
-              </span>
-            }
+            right={<DecisionFilters value={filter} onChange={setFilter} counts={filterCounts} />}
           />
 
           {conn === "offline" && decisions.length === 0 ? (
@@ -244,10 +336,15 @@ export default function Dashboard() {
               The first decision lands as soon as the loop ticks.{" "}
               <span className="text-zinc-300">Run tick</span> to fast-forward.
             </Paper>
+          ) : filtered.length === 0 ? (
+            <Paper className="px-6 py-10 text-center text-sm text-zinc-500">
+              No <span className="text-zinc-300">{filter}</span> decisions yet. Try another filter or
+              arm an anomaly.
+            </Paper>
           ) : (
             <motion.ol layout className="flex flex-col gap-2">
               <AnimatePresence initial={false}>
-                {decisions.map((d, i) => (
+                {filtered.map((d, i) => (
                   <DecisionRow
                     key={d.id}
                     d={d}
@@ -266,8 +363,20 @@ export default function Dashboard() {
             <span className="mx-2 text-zinc-800">·</span>
             merchants <span className="text-zinc-400">{MERCHANTS_URL}</span>
           </span>
-          <span className="inline-flex items-center gap-2">
-            <Radio className="h-3 w-3 text-emerald-400" /> Base mainnet · 8453
+          <span className="inline-flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5">
+              <Kbd>T</Kbd> tick
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Kbd>F</Kbd> brief
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Kbd>G</Kbd> grant
+            </span>
+            <span className="text-zinc-800 mx-1">·</span>
+            <span className="inline-flex items-center gap-2">
+              <Radio className="h-3 w-3 text-emerald-400" /> Base 8453
+            </span>
           </span>
         </footer>
       </main>
@@ -360,5 +469,4 @@ function DecisionSkeleton({ count }: { count: number }) {
   );
 }
 
-// Tree-shake guard: keep cn alive even if no inline use here right now.
 cn;
