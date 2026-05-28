@@ -11,6 +11,7 @@ import {
 import { formatMicroUsdc, formatTime } from "../lib/format";
 import type { AgentEvent, Decision, MerchantService } from "../lib/types";
 import FridayBriefPanel from "./FridayBrief";
+import OnboardingPanel from "./OnboardingPanel";
 
 type ConnState = "connecting" | "live" | "offline";
 
@@ -141,6 +142,8 @@ export default function Dashboard() {
           {error}
         </div>
       ) : null}
+
+      <OnboardingPanel />
 
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
         <StatCard label="Paid this session" value={String(stats.paidCount)} hint={stats.spent} accent="emerald" />
