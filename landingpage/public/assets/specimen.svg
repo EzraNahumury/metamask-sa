@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 440" fill="none" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- orbital rings -->
+  <circle cx="280" cy="220" r="80" stroke="#5a5a5a" stroke-width="1.5"/>
+  <circle cx="280" cy="220" r="130" stroke="#454545" stroke-width="1.5" stroke-dasharray="3 9"/>
+  <circle cx="280" cy="220" r="186" stroke="#3a3a3a" stroke-width="1.5"/>
+
+  <!-- connection lines (center -> satellites) -->
+  <g stroke="#6e6e6e" stroke-width="1.5">
+    <path d="M280 220 L470 120"/>
+    <path d="M280 220 L486 268"/>
+    <path d="M280 220 L330 56"/>
+    <path d="M280 220 L96 132"/>
+    <path d="M280 220 L82 300"/>
+    <path d="M280 220 L262 392"/>
+    <path d="M280 220 L432 372"/>
+  </g>
+  <!-- cross links (network) -->
+  <g stroke="#4a4a4a" stroke-width="1.2" stroke-dasharray="2 8">
+    <path d="M470 120 L486 268"/>
+    <path d="M96 132 L82 300"/>
+    <path d="M330 56 L470 120"/>
+    <path d="M82 300 L262 392"/>
+    <path d="M486 268 L432 372"/>
+  </g>
+
+  <!-- central vault (agent) -->
+  <path d="M280 168 l46 27 v50 l-46 27 l-46 -27 v-50 z" fill="#0a0a0a" stroke="#f2f2f2" stroke-width="2.5"/>
+  <path d="M280 168 v52 l46 27 M280 220 l-46 27 M280 220 v60" stroke="#7a7a7a" stroke-width="1.5"/>
+  <circle cx="280" cy="220" r="9" fill="#f2f2f2" stroke="none"/>
+
+  <!-- satellite: wallet -->
+  <g stroke="#dcdcdc" stroke-width="2">
+    <rect x="448" y="100" width="44" height="34" rx="7" fill="#0a0a0a"/>
+    <circle cx="482" cy="117" r="4" fill="#dcdcdc" stroke="none"/>
+  </g>
+  <!-- satellite: merchant -->
+  <rect x="466" y="250" width="40" height="40" rx="9" fill="#0a0a0a" stroke="#dcdcdc" stroke-width="2"/>
+  <!-- satellite: venice brain -->
+  <circle cx="330" cy="56" r="22" fill="#0a0a0a" stroke="#dcdcdc" stroke-width="2"/>
+  <path d="M320 56 h20 M330 46 v20" stroke="#9a9a9a" stroke-width="1.5"/>
+  <!-- satellite: base chain -->
+  <g stroke="#dcdcdc" stroke-width="2">
+    <rect x="74" y="112" width="24" height="24" rx="5" fill="#0a0a0a"/>
+    <rect x="104" y="112" width="24" height="24" rx="5" fill="#0a0a0a"/>
+  </g>
+  <!-- satellite: revoke / power -->
+  <circle cx="82" cy="300" r="22" fill="#0a0a0a" stroke="#dcdcdc" stroke-width="2"/>
+  <path d="M82 290 v12 M73 296 a13 13 0 1 0 18 0" stroke="#dcdcdc" stroke-width="2"/>
+  <!-- satellite: user -->
+  <circle cx="262" cy="392" r="20" fill="#0a0a0a" stroke="#dcdcdc" stroke-width="2"/>
+  <circle cx="262" cy="385" r="6" stroke="#9a9a9a" stroke-width="1.5"/>
+  <path d="M251 401 a11 9 0 0 1 22 0" stroke="#9a9a9a" stroke-width="1.5"/>
+  <!-- satellite: friday brief -->
+  <rect x="412" y="352" width="40" height="40" rx="8" fill="#0a0a0a" stroke="#dcdcdc" stroke-width="2"/>
+  <path d="M422 366 h20 M422 378 h13" stroke="#9a9a9a" stroke-width="1.5"/>
+
+  <!-- scattered data points -->
+  <g fill="#6e6e6e" stroke="none">
+    <circle cx="392" cy="86" r="2.4"/>
+    <circle cx="430" cy="170" r="2"/>
+    <circle cx="150" cy="86" r="2"/>
+    <circle cx="146" cy="358" r="2.4"/>
+    <circle cx="352" cy="404" r="2"/>
+    <circle cx="510" cy="200" r="2"/>
+    <circle cx="40" cy="220" r="2.4"/>
+    <circle cx="208" cy="40" r="2"/>
+    <circle cx="356" cy="300" r="2"/>
+    <circle cx="206" cy="300" r="2.4"/>
+  </g>
+</svg>

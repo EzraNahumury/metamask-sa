@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" stroke="#ededed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- chip body -->
+  <rect x="78" y="128" width="150" height="150" rx="18"/>
+  <!-- chip pins -->
+  <path d="M104 128 v-16 M153 128 v-16 M202 128 v-16 M104 278 v16 M153 278 v16 M202 278 v16 M78 158 h-16 M78 203 h-16 M78 248 h-16"/>
+  <!-- core node + traces -->
+  <circle cx="153" cy="203" r="14" fill="#ededed" stroke="none"/>
+  <path d="M153 189 v-30 M153 217 v30 M139 203 h-34 M167 203 h34" stroke="#8c8c8c" stroke-width="2"/>
+  <circle cx="105" cy="159" r="4" fill="#8c8c8c" stroke="none"/>
+  <circle cx="201" cy="247" r="4" fill="#8c8c8c" stroke="none"/>
+  <!-- decision branches -->
+  <path d="M228 168 h40 M228 203 h52 M228 248 h40" stroke="#8c8c8c" stroke-width="2"/>
+  <!-- PAY (check) -->
+  <circle cx="296" cy="168" r="20"/>
+  <path d="M287 168 l6 7 l11 -14"/>
+  <!-- REFUSE (cross) -->
+  <circle cx="308" cy="203" r="20" stroke="#8c8c8c"/>
+  <path d="M300 195 l16 16 M316 195 l-16 16" stroke="#8c8c8c"/>
+  <!-- ESCALATE (!) -->
+  <circle cx="296" cy="248" r="20" stroke="#8c8c8c"/>
+  <path d="M296 240 v9" stroke="#8c8c8c"/>
+  <circle cx="296" cy="256" r="1.6" fill="#8c8c8c" stroke="#8c8c8c"/>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" stroke="#ededed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- block chain -->
+  <rect x="74" y="146" width="64" height="64" rx="12"/>
+  <rect x="168" y="146" width="64" height="64" rx="12"/>
+  <rect x="262" y="146" width="64" height="64" rx="12"/>
+  <!-- links -->
+  <path d="M138 172 h30 M138 184 h30 M232 172 h30 M232 184 h30" stroke="#8c8c8c" stroke-width="2"/>
+  <!-- settled check on final block -->
+  <path d="M280 178 l8 9 l16 -20"/>
+  <!-- block glyphs -->
+  <path d="M90 172 h32 M90 186 h20" stroke="#8c8c8c" stroke-width="2"/>
+  <path d="M184 172 h32 M184 186 h20" stroke="#8c8c8c" stroke-width="2"/>
+  <!-- base line -->
+  <path d="M64 268 q136 -26 272 0" stroke="#8c8c8c" stroke-width="2"/>
+  <text x="200" y="300" text-anchor="middle" font-family="ui-monospace, monospace" font-size="15" letter-spacing="2" fill="#8c8c8c" stroke="none">BASE MAINNET</text>
+  <!-- 1Shot relayer -->
+  <circle cx="106" cy="332" r="16" stroke="#8c8c8c" stroke-width="2"/>
+  <path d="M106 326 v12 M100 332 h12" stroke="#8c8c8c" stroke-width="2"/>
+  <path d="M106 316 v-86" stroke="#8c8c8c" stroke-width="2" stroke-dasharray="5 7"/>
+  <path d="M98 224 l8 -10 l8 10" stroke="#8c8c8c" stroke-width="2"/>
+</svg>

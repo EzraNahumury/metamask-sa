@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer utilities {
+  .text-mega {
+    font-size: 21vw;
+    line-height: 0.75;
+    letter-spacing: -0.04em;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    background-color: #fcfcfc;
+    color: #111;
+  }
+
+  body {
+    overflow-x: hidden;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: #000;
+    color: #fff;
+  }
+}
+
+/* walking-dinosaur asset (hero) */
+@keyframes dino-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes dino-step-front {
+  0%,
+  100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+@keyframes dino-step-back {
+  0%,
+  100% {
+    transform: rotate(-20deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+}
+.dino-bob {
+  animation: dino-bob 0.46s ease-in-out infinite;
+}
+.dino-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 6%;
+}
+.dino-leg-front {
+  animation: dino-step-front 0.46s ease-in-out infinite;
+}
+.dino-leg-back {
+  animation: dino-step-back 0.46s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .dino-bob,
+  .dino-leg-front,
+  .dino-leg-back {
+    animation: none;
+  }
+}
