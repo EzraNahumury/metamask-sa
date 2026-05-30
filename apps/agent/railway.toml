@@ -1,0 +1,14 @@
+# Railway service config for the agent.
+# Point the service's root directory at the repo root in the Railway UI,
+# and select this Dockerfile via builder = "DOCKERFILE".
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/agent/Dockerfile"
+
+[deploy]
+startCommand = "pnpm --filter @delegate/agent run start"
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

@@ -35,6 +35,8 @@ const Schema = z.object({
   MERCHANTS_BASE_URL: z.preprocess(emptyToUndefined, z.string().url().default("http://localhost:4021")),
 
   AGENT_TICK_SECONDS: z.coerce.number().int().positive().default(30),
+  // PORT is set by Railway / Render / Fly; AGENT_PORT remains for local dev.
+  PORT: z.coerce.number().int().positive().optional(),
   AGENT_PORT: z.coerce.number().int().positive().default(4030),
   AGENT_CORS_ORIGIN: z.string().default("*"),
   /**

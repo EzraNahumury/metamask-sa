@@ -20,8 +20,10 @@ async function tickLoop() {
 
 async function main() {
   const app = buildServer();
-  app.listen(config.AGENT_PORT, () => {
-    console.log(`agent listening at http://localhost:${config.AGENT_PORT}`);
+  // Railway / Render / Fly inject PORT; fall back to AGENT_PORT for local dev.
+  const port = config.PORT ?? config.AGENT_PORT;
+  app.listen(port, () => {
+    console.log(`agent listening on port ${port}`);
     console.log(`  GET  /decisions       full decision log`);
     console.log(`  GET  /events          SSE stream`);
     console.log(`  POST /admin/run-tick  trigger one tick`);
