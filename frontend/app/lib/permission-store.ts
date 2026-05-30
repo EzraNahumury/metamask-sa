@@ -22,9 +22,16 @@ export type StoredGrant = {
   rawResponse: unknown;
 };
 
+// JSON.stringify replacer that converts BigInt → string. The kit's grant
+// response includes BigInt fields (periodAmount, expiry, etc.) which break
+// the default serializer.
+function bigintReplacer(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
 export function saveGrant(g: StoredGrant) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(g));
+  window.localStorage.setItem(KEY, JSON.stringify(g, bigintReplacer));
 }
 
 export function loadGrant(): StoredGrant | null {

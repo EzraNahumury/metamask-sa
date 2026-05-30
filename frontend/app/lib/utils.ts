@@ -19,7 +19,10 @@ export function formatError(err: unknown): string {
     if (typeof maybe.message === "string") return maybe.message;
     if (typeof maybe.reason === "string") return maybe.reason;
     try {
-      return JSON.stringify(err).slice(0, 280);
+      return JSON.stringify(
+        err,
+        (_k, v) => (typeof v === "bigint" ? v.toString() : v),
+      ).slice(0, 280);
     } catch {
       return "Unknown error";
     }
