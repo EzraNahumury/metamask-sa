@@ -782,7 +782,13 @@ export default function App() {
               {NAV_LINKS.map((link) => (
                 <a
                   key={link}
-                  href="#"
+                  href={
+                    link === "Launch"
+                      ? "https://delegate-appsfrontend.vercel.app/"
+                      : "#"
+                  }
+                  target={link === "Launch" ? "_blank" : undefined}
+                  rel={link === "Launch" ? "noopener noreferrer" : undefined}
                   className="transition-colors hover:text-black hover:underline"
                 >
                   {link}
@@ -805,7 +811,13 @@ export default function App() {
                   {NAV_LINKS.map((link) => (
                     <a
                       key={link}
-                      href="#"
+                      href={
+                        link === "Launch"
+                          ? "https://delegate-appsfrontend.vercel.app/"
+                          : "#"
+                      }
+                      target={link === "Launch" ? "_blank" : undefined}
+                      rel={link === "Launch" ? "noopener noreferrer" : undefined}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="font-mono text-sm uppercase tracking-[0.2em] text-gray-800 transition-colors hover:text-black"
                     >
@@ -857,7 +869,12 @@ export default function App() {
 
             {/* CTA */}
             <motion.div variants={fadeUp} className="mt-8">
-              <button className="group relative inline-flex items-center gap-3 overflow-hidden rounded-md border border-[#1a1a1a] bg-[#1a1a1a] px-6 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-[0.5px] hover:shadow-[3px_3px_0px_rgba(17,17,17,0.5)] active:translate-y-0 active:shadow-sm">
+              <a
+                href="https://delegate-appsfrontend.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex items-center gap-3 overflow-hidden rounded-md border border-[#1a1a1a] bg-[#1a1a1a] px-6 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-[0.5px] hover:shadow-[3px_3px_0px_rgba(17,17,17,0.5)] active:translate-y-0 active:shadow-sm"
+              >
                 {/* sliding panel */}
                 <span className="absolute inset-0 -translate-x-[101%] bg-[#fcfcfc] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0" />
                 <span className="relative z-10 flex items-center gap-3">
@@ -870,7 +887,7 @@ export default function App() {
                     Launch App
                   </span>
                 </span>
-              </button>
+              </a>
             </motion.div>
           </motion.div>
 
